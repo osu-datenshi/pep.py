@@ -197,7 +197,7 @@ class handler(requestsManager.asyncRequestHandler):
 			except exceptions.tokenNotFoundException:
 				# Token not found. Disconnect that user
 				responseData = serverPackets.loginError()
-				responseData += serverPackets.notification("Oh no! Ainu have something wrong at the moment... Maybe try login again?")
+				responseData += serverPackets.notification("Oh no! Datenshi have something wrong at the moment... Maybe try login again?")
 				log.warning("Received packet from unknown token ({}).".format(requestTokenString))
 				log.info("{} has been disconnected (invalid token)".format(requestTokenString))
 			finally:
@@ -243,7 +243,7 @@ class handler(requestsManager.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
 	def asyncGet(self):
-		html = 	"<html><head><title>Aoba's a cutie?</title>"
-		html += "<iframe src='https://ghostbin.co/paste/bwe8z' style='position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;'></iframe>"
+		html = 	"<html><head><title>Bjir Vroh :v</title>"
+		html += "Bjir anjay mantap gan skuy gas"
 		#Yes. I just wrote the credit... in it.
 		self.write(html)

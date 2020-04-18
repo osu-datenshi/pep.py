@@ -339,7 +339,7 @@ def unrestrict(fro, chan, message):
 
 def restartShutdown(restart):
 	"""Restart (if restart = True) or shutdown (if restart = False) pep.py safely"""
-	msg = "We are performing some maintenance. Bancho will {} in 5 seconds. Thank you for your patience.".format("restart" if restart else "shutdown")
+	msg = "Sorry bos, kita restart bentar buat maitenance. Bancho akan {} dalam 5 detik..".format("restart" if restart else "shutdown")
 	systemHelper.scheduleShutdown(5, restart, msg)
 	return msg
 
