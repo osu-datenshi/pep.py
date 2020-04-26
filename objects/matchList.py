@@ -33,6 +33,7 @@ class matchList:
 		self.matches[matchID] = match.match(matchID, matchName, matchPassword, beatmapID, beatmapName, beatmapMD5, gameMode, hostUserID, isTourney)
 		return matchID
 
+
 	def disposeMatch(self, matchID):
 		"""
 		Destroy match object with id = matchID

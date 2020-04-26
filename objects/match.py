@@ -796,7 +796,7 @@ class match:
 		self.isStarting = False
 
 		# Make sure we have enough players
-		if self.countUsers() < 2 or not self.checkTeams():
+		if self.countUsers() < 1 or not self.checkTeams():
 			return False
 
 		# Create playing channel
