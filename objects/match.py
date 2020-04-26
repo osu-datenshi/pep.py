@@ -5,6 +5,7 @@ import threading
 import time
 
 from common.log import logUtils as log
+from common.ripple import userUtils as getClan
 from constants import dataTypes
 from constants import matchModModes
 from constants import matchScoringTypes
@@ -84,6 +85,9 @@ class match:
 
 		# Create referrs array that couls use !mp command from the bot.
 		self.refers = [hostUserID]
+
+		# Clantag
+		self.getClan = getClan
 
 	def addRefer(self, referUserId):
 		self.refers.append(referUserId)
@@ -460,11 +464,7 @@ class match:
 			chat.sendMessage(
 				glob.BOT_NAME,
 				chanName,
-				"and uh... in case you're playing unranked or broken maps "
-				"that are now available through ripple's osu!direct, you can "
-				"type '!bloodcat' in the chat to get a download link for the "
-				"currently selected map from Bloodcat! If osu!direct is not working, "
-				"You can still use '!beatconnect' as a mirror too! "
+				"You can use !bloodcat or !beatconnect for another beatmap mirror, in case if you have a problem with osudirect"
 			)
 			self.bloodcatAlert = True
 
@@ -796,7 +796,7 @@ class match:
 		self.isStarting = False
 
 		# Make sure we have enough players
-		if self.countUsers() < 2 or not self.checkTeams():
+		if self.countUsers() < 1 or not self.checkTeams():
 			return False
 
 		# Create playing channel
