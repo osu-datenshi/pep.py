@@ -5,6 +5,7 @@ import threading
 import time
 
 from common.log import logUtils as log
+from common.ripple import userUtils as getClan
 from constants import dataTypes
 from constants import matchModModes
 from constants import matchScoringTypes
@@ -84,6 +85,9 @@ class match:
 
 		# Create referrs array that couls use !mp command from the bot.
 		self.refers = [hostUserID]
+
+		# Clantag
+		self.getClan = getClan
 
 	def addRefer(self, referUserId):
 		self.refers.append(referUserId)
