@@ -464,11 +464,7 @@ class match:
 			chat.sendMessage(
 				glob.BOT_NAME,
 				chanName,
-				"and uh... in case you're playing unranked or broken maps "
-				"that are now available through ripple's osu!direct, you can "
-				"type '!bloodcat' in the chat to get a download link for the "
-				"currently selected map from Bloodcat! If osu!direct is not working, "
-				"You can still use '!beatconnect' as a mirror too! "
+				"You can use !bloodcat or !beatconnect for another beatmap mirror, in case if you have a problem with osudirect"
 			)
 			self.bloodcatAlert = True
 
