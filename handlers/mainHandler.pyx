@@ -244,13 +244,6 @@ class handler(requestsManager.asyncRequestHandler):
 	@tornado.gen.engine
 	def asyncGet(self):
 		html = 	"<html><head><title>Bjir Vroh :v</title>"
-		html += "     _       _                 _     _ 
-    | |     | |               | |   (_)
-  __| | __ _| |_ ___ _ __  ___| |__  _ 
- / _` |/ _` | __/ _ \ '_ \/ __| '_ \| |
-| (_| | (_| | ||  __/ | | \__ \ | | | |
- \__,_|\__,_|\__\___|_| |_|___/_| |_|_|
-                                       
-                                       "
+		html += "Brooooo</head></html>"
 		#Yes. I just wrote the credit... in it.
 		self.write(html)
