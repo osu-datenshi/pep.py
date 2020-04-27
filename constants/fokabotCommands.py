@@ -20,7 +20,7 @@ from objects import fokabot
 from objects import glob
 from helpers import chatHelper as chat
 from common.web import cheesegull
-
+from discord_webhook import DiscordWebhook, DiscordEmbed
 
 def bloodcatMessage(beatmapID):
 	beatmap = glob.db.fetch("SELECT song_name, beatmapset_id FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [beatmapID])
@@ -801,6 +801,14 @@ def report(fro, chan, message):
 		glob.db.execute("INSERT INTO reports (id, from_uid, to_uid, reason, chatlog, time) VALUES (NULL, %s, %s, %s, %s, %s)", [userUtils.getID(fro), targetID, "{reason} - ingame {info}".format(reason=reason, info="({})".format(additionalInfo) if additionalInfo is not None else ""), chatlog, int(time.time())])
 		msg = "You've reported {target} for {reason}{info}. A Community Manager will check your report as soon as possible. Every !report message you may see in chat wasn't sent to anyone, so nobody in chat, but admins, know about your report. Thank you for reporting!".format(target=target, reason=reason, info="" if additionalInfo is None else " (" + additionalInfo + ")")
 		adminMsg = "{user} has reported {target} for {reason} ({info})".format(user=fro, target=target, reason=reason, info=additionalInfo)
+
+		# send to discord
+		webhook = DiscordWebhook(url='https://discordapp.com/api/webhooks/702540904480899082/GFfkaiZK3OAltjYPR0ag__DSB3BSjtbqNqj2_N0xEGzZhFaZieX5-Jmp2Ii79YKPR-bP')
+		embed = DiscordEmbed(title='LAPORAN MASUK BOS!!')
+		embed = DiscordEmbed(description='{}'.format(adminMsg))
+		webhook.add_embed(embed)
+		log.info("[REPORT] REPORT masuk ke discord bro")
+		webhook.execute()
 
 		# Log report in #admin and on discord
 		chat.sendMessage(glob.BOT_NAME, "#admin", adminMsg)
