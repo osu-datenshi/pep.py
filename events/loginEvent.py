@@ -91,13 +91,13 @@ def handle(tornadoRequest):
 
 
 		# Save HWID in db for multiaccount detection
-		hwAllowed = userUtils.logHardware(userID, clientData, firstLogin)
+		#hwAllowed = userUtils.logHardware(userID, clientData, firstLogin)
 
 		# This is false only if HWID is empty
 		# if HWID is banned, we get restricted so there's no
 		# need to deny bancho access
-		if not hwAllowed:
-			raise exceptions.haxException()
+		#if not hwAllowed:
+		#	raise exceptions.haxException()
 
 		# Log user IP
 		userUtils.logIP(userID, requestIP)
