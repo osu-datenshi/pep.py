@@ -464,7 +464,7 @@ class match:
 			chat.sendMessage(
 				glob.BOT_NAME,
 				chanName,
-				"You can use !bloodcat or !beatconnect for another beatmap mirror, in case if you have a problem with osudirect"
+				"You can use !bloodcat for another beatmap mirror, in case if you have a problem with osudirect"
 			)
 			self.bloodcatAlert = True
 

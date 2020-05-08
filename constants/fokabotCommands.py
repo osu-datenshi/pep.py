@@ -35,18 +35,17 @@ def beatconnectMessage(beatmapID):
 	beatmap = glob.db.fetch("SELECT song_name, beatmapset_id FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [beatmapID])
 	if beatmap is None:
 		return "Sorry, I'm not able to provide a download link for this map :("
-	return "Download [https://beatconnect.io/b/{} {}] from Beatconnect".format(
-		beatmap["beatmapset_id"],
-		beatmap["song_name"],
-	)
+		return "Download from beatconnect has been disabled, because the site is already shutdown"
+		#beatmap["beatmapset_id"],
+		#beatmap["song_name"],
+	#)
 	
 def mirrorMessage(beatmapID):
 	beatmap = glob.db.fetch("SELECT song_name, beatmapset_id FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [beatmapID])
 	if beatmap is None:
 		return "Sorry, I'm not able to provide a download link for this map :("
-	return "Download {} from [https://beatconnect.io/b/{} Beatconnect], [https://bloodcat.com/osu/s/{} Bloodcat] or [osu://dl/{} osu!direct].".format(
+	return "Download {} from [https://bloodcat.com/osu/s/{} Bloodcat] or [osu://dl/{} osu!direct].".format(
 		beatmap["song_name"],
-		beatmap["beatmapset_id"],
 		beatmap["beatmapset_id"],
 		beatmap["beatmapset_id"],
 	)
@@ -77,7 +76,7 @@ def faq(fro, chan, message):
 		"swearing": "Please don't abuse swearing",
 		"spam": "Please don't spam",
 		"offend": "Please don't offend other players",
-		"discord": "(Join Datenshi Discord!)[https://discord.io/datenshi]",
+		"discord": "(Join Datenshi Discord!)[https://link.troke.id/datenshi]",
 		"ping": "NGIK NGOK NGEK PONG",
 		"bruh": "BRUH",
 		"changelog": "Check the (changelog)[https://datenshi.xyz/changelog] !",
