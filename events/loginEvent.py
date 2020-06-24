@@ -91,13 +91,14 @@ def handle(tornadoRequest):
 
 
 		# Save HWID in db for multiaccount detection
-		#hwAllowed = userUtils.logHardware(userID, clientData, firstLogin)
-
+		hwAllowed = userUtils.logHardware(userID, clientData, firstLogin)
+		
 		# This is false only if HWID is empty
 		# if HWID is banned, we get restricted so there's no
 		# need to deny bancho access
-		#if not hwAllowed:
-		#	raise exceptions.haxException()
+		
+		if not hwAllowed :
+			raise exceptions.haxException()
 
 		# Log user IP
 		userUtils.logIP(userID, requestIP)
@@ -121,7 +122,7 @@ def handle(tornadoRequest):
 			if expireDate-int(time.time()) <= 86400*3:
 				expireDays = round((expireDate-int(time.time()))/86400)
 				expireIn = "{} days".format(expireDays) if expireDays > 1 else "less than 24 hours"
-				responseToken.enqueue(serverPackets.notification("Your donor tag expires in {}! When your donor tag expires, you won't have any of the donor privileges, like yellow username, custom badge and discord custom role and username color! If you wish to keep supporting Ripple and you don't want to lose your donor privileges, you can donate again by clicking on 'Support us' on Ripple's website.".format(expireIn)))
+				responseToken.enqueue(serverPackets.notification("Your donor tag expires in {}! When your donor tag expires, you won't have any of the donor privileges, like yellow username, custom badge and discord custom role and username color! If you wish to keep supporting Datenshi and you don't want to lose your donor privileges, you can donate again by clicking on 'Support us' on Datenshi's website.".format(expireIn)))
 
 		# Deprecate telegram 2fa and send alert
 		if userUtils.deprecateTelegram2Fa(userID):

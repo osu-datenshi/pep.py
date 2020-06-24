@@ -802,9 +802,8 @@ def report(fro, chan, message):
 		adminMsg = "{user} has reported {target} for {reason} ({info})".format(user=fro, target=target, reason=reason, info=additionalInfo)
 
 		# send to discord
-		webhook = DiscordWebhook(url='https://discordapp.com/api/webhooks/702540904480899082/GFfkaiZK3OAltjYPR0ag__DSB3BSjtbqNqj2_N0xEGzZhFaZieX5-Jmp2Ii79YKPR-bP')
-		embed = DiscordEmbed(title='LAPORAN MASUK BOS!!')
-		embed = DiscordEmbed(description='{}'.format(adminMsg))
+		webhook = DiscordWebhook(url=glob.conf.config["discord"]["reports"])
+		embed = DiscordEmbed(title="LAPORAN MASUK BOS!!", description="{}".format(adminMsg))
 		webhook.add_embed(embed)
 		log.info("[REPORT] REPORT masuk ke discord bro")
 		webhook.execute()
@@ -1375,12 +1374,14 @@ def postAnnouncement(fro, chan, message): # Post to #announce ingame
 	userID = userUtils.getID(fro)
 	name = userUtils.getUsername(userID)
 
-	if glob.conf.config["discord"]["enable"] == True:
-		webhook = aobaHelper.Webhook(glob.conf.config["discord"]["announcement"], color=0xadd8e6, footer="This announcement was posted in-game")
-		webhook.set_author(name=name, icon='https://a.datenshi.xyz/{}'.format(str(userID)), url="https://datenshi.xyz/u/{}".format(str(userID)))
-		webhook.set_title(title="=-= ANNOUNCEMENT =-=")
-		webhook.set_desc(announcement)
-		webhook.post()
+	# send to discord
+	webhook = DiscordWebhook(url=glob.conf.config["discord"]["announcement"])
+	embed = DiscordEmbed(title='Announcement', description='{}'.format(announcement), color=242424)
+	embed.set_author(name=name, url='https://datenshi.xyz/u/{}'.format(str(userID)), icon_url='https://a.datenshi.xyz/{}'.format(str(userID)))
+	embed.set_footer(text='This announcement was posted from in-game')
+	webhook.add_embed(embed)
+	log.info("[ANNOUNCE] Announce masuk ke discord bro")
+	webhook.execute()
 
 	return "Announcement successfully sent."
 

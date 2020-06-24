@@ -12,7 +12,7 @@ from common.constants import privileges
 from common.log import logUtils as log
 from common.ripple import passwordUtils, scoreUtils
 from objects import glob
-
+from discord_webhook import DiscordWebhook, DiscordEmbed
 
 def getBeatmapTime(beatmapID):
 	p = 0
@@ -1180,7 +1180,7 @@ def logHardware(userID, hashes, activation = False):
 	for i in hashes[2:5]:
 		if i == "":
 			log.warning("Invalid hash set ({}) for user {} in HWID check".format(hashes, userID), "bunk")
-			return False
+			return True
 
 	# Run some HWID checks on that user if he is not restricted
 	if not isRestricted(userID):
@@ -1188,7 +1188,7 @@ def logHardware(userID, hashes, activation = False):
 		username = getUsername(userID)
 
 		# Get the list of banned or restricted users that have logged in from this or similar HWID hash set
-		if hashes[2] == "b4ec3c4334a0249dae95c284ec5983df":
+		if hashes[2] == "b4ec3c4334a0249dae95c284ec5983df" or hashes[4] == "ffae06fb022871fe9beb58b005c5e21d":
 			# Running under wine, check by unique id
 			log.debug("Logging Linux/Mac hardware")
 			banned = glob.db.fetchAll("""SELECT users.id as userid, hw_user.occurencies, users.username FROM hw_user
@@ -1199,6 +1199,7 @@ def logHardware(userID, hashes, activation = False):
 					"userid": userID,
 					"uid": hashes[3],
 				})
+
 		else:
 			# Running under windows, do all checks
 			log.debug("Logging Windows hardware")
@@ -1300,6 +1301,7 @@ def verifyUser(userID, hashes):
 			"uid": hashes[3],
 			"userid": userID
 		})
+		return True
 	else:
 		# Running under windows, full check
 		log.debug("Veryfing with Windows hardware")
@@ -1324,15 +1326,11 @@ def verifyUser(userID, hashes):
 
 		# Restrict the original
 		restrict(originalUserID)
-
-		# Discord message
-		log.warning("User **{originalUsername}** ({originalUserID}) has been restricted because he has created multiaccount **{username}** ({userID}). The multiaccount has been banned.".format(
-			originalUsername=originalUsername,
-			originalUserID=originalUserID,
-			username=username,
-			userID=userID
-		), "cm")
-
+		# send to discord
+		webhook = DiscordWebhook(url=glob.conf.config["discord"]["autobanned"])
+		embed = DiscordEmbed(title="NEW REPORTS!", description="Has created multiaccount {} ({})".format(username, userID), color=ff0d0d)
+		webhook.add_embed(embed)
+		webhook.execute()
 		# Disallow login
 		return False
 	else:
