@@ -226,6 +226,14 @@ def silence(fro, chan, message):
 
 	# Log message
 	msg = "{} has been silenced for the following reason: {}".format(target, reason)
+
+        # send to discord
+	webhook = DiscordWebhook(url=glob.conf.config["discord"]["reports"])
+	embed = DiscordEmbed(description="{}".format(msg))
+	webhook.add_embed(embed)
+	log.info("[REPORT] REPORT masuk ke discord bro")
+	webhook.execute()
+
 	return msg
 
 def removeSilence(fro, chan, message):
@@ -1376,8 +1384,8 @@ def postAnnouncement(fro, chan, message): # Post to #announce ingame
 
 	# send to discord
 	webhook = DiscordWebhook(url=glob.conf.config["discord"]["announcement"])
-	embed = DiscordEmbed(title='Announcement', description='{}'.format(announcement), color=242424)
-	embed.set_author(name=name, url='https://datenshi.xyz/u/{}'.format(str(userID)), icon_url='https://a.datenshi.xyz/{}'.format(str(userID)))
+	embed = DiscordEmbed(description='{}'.format(announcement), color=242424)
+	embed.set_author(name='Staff : {}'.format(name), url='https://datenshi.xyz/u/{}'.format(str(userID)), icon_url='https://a.datenshi.xyz/{}'.format(str(userID)))
 	embed.set_footer(text='This announcement was posted from in-game')
 	webhook.add_embed(embed)
 	log.info("[ANNOUNCE] Announce masuk ke discord bro")
