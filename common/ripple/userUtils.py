@@ -1328,7 +1328,7 @@ def verifyUser(userID, hashes):
 		restrict(originalUserID)
 		# send to discord
 		webhook = DiscordWebhook(url=glob.conf.config["discord"]["autobanned"])
-		embed = DiscordEmbed(title="NEW REPORTS!", description="Has created multiaccount {} ({})".format(username, userID), color=ff0d0d)
+		embed = DiscordEmbed(title="NEW REPORTS!", description="{} has been banned because multiaccount (old id {} {})".format(username, originalUsername, originalUserID), color=16711680)
 		webhook.add_embed(embed)
 		webhook.execute()
 		# Disallow login

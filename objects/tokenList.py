@@ -35,9 +35,11 @@ class tokenList:
 		:param tournament: if True, flag this client as a tournement client. Default: True.
 		:return: token object
 		"""
+		clients = glob.tokens.getTokenFromUserID(userID)
 		newToken = osuToken.token(userID, ip=ip, irc=irc, timeOffset=timeOffset, tournament=tournament)
 		self.tokens[newToken.token] = newToken
-		glob.redis.incr("ripple:online_users")
+		if not clients:
+			glob.redis.incr("ripple:online_users")
 		return newToken
 
 	def deleteToken(self, token):
