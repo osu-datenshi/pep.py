@@ -264,10 +264,12 @@ def ban(fro, chan, message):
 	for i in message:
 		i = i.lower()
 	target = message[0]
-
+	alasan = " ".join(message[1:]).strip()
 	# Make sure the user exists
 	targetUserID = userUtils.getIDSafe(target)
 	userID = userUtils.getID(fro)
+	if not alasan:
+		return "provide good best reason."
 	if not targetUserID:
 		return "{}: user not found".format(target)
 	if targetUserID in (999, 1000):
@@ -280,7 +282,13 @@ def ban(fro, chan, message):
 	if targetToken is not None:
 		targetToken.enqueue(serverPackets.loginBanned())
 
-	log.rap(userID, "has banned {}".format(target), True)
+	log.rap(userID, "{} has been banned, reason {}".format(target, alasan), True)
+        # send to discord
+	webhook = DiscordWebhook(url=glob.conf.config["discord"]["autobanned"])
+	embed = DiscordEmbed(title="BANNED THANKS", description="{} has been banned because {}".format(target, alasan), color=16711680)
+	webhook.add_embed(embed)
+	webhook.execute()
+
 	return "RIP {}. You will not be missed.".format(target)
 
 def unban(fro, chan, message):
@@ -1361,18 +1369,21 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 
 		chat.sendMessage(glob.BOT_NAME, "#announce", msg)
 		
-		if glob.conf.config["discord"]["enable"]:
-			if mapType == "set":
-				webhookdesp = "{} (set) has been {} by {}".format(beatmapData["song_name"], status, name)
-			else:
-				webhookdesp = "{} has been {} by {}".format(beatmapData["song_name"], status, name)
+        	# send to discord
+		if mapType == "set":
+			dcdesc = "{} (set) has been {} by {}".format(beatmapData["song_name"], status, name)
+		else:
+			dcdesc = "{} has been {} by {}".format(beatmapData["song_name"], status, name)
 
-			webhook = aobaHelper.Webhook(glob.conf.config["discord"]["ranked"], color=0xadd8e6, footer="This beatmap was {} on osu!Ainu".format(status))
-			webhook.set_author(name=name, icon='https://a.datenshi.xyz/{}'.format(str(userID)), url="https://datenshi.xyz/u/{}".format(str(userID)))
-			webhook.set_title(title="New {} map!".format(status), url='https://osu.ppy.sh/s/{}'.format(str(beatmapData["beatmapset_id"])))
-			webhook.set_desc(webhookdesp)
-			webhook.set_image("https://assets.ppy.sh/beatmaps/{}/covers/cover.jpg".format(str(beatmapData["beatmapset_id"])))
-			webhook.post()
+		webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
+		embed = DiscordEmbed(description='{}'.format(dcdesc), color=242424)
+		embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
+		embed.set_author(name='{}'.format(name), url='https://datenshi.xyz/u/{}'.format(str(userID)), icon_url='https://a.datenshi.xyz/{}'.format(str(userID)))
+		embed.set_footer(text='This map was {} from in-game'.format(status))
+		webhook.add_embed(embed)
+		log.info("[rankedmap] Rank status masuk ke discord bro")
+		webhook.execute()
+
 
 		return msg
 
