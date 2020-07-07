@@ -82,7 +82,8 @@ def faq(fro, chan, message):
 		"changelog": "Check the (changelog)[https://datenshi.xyz/changelog] !",
 		"english": "Please keep this channel in english.",
 		"topic": "Can you please drop the topic and talk about something else?",
-		"lines": "Please try to keep your sentences on a single line to avoid getting silenced."
+		"lines": "Please try to keep your sentences on a single line to avoid getting silenced.",
+		"vote": "Dont forget to vote us! (Click Here)[https://link.troke.id/vote]"
 	}
 	key = message[0].lower()
 	if key not in messages:
@@ -314,15 +315,18 @@ def restrict(fro, chan, message):
 	for i in message:
 		i = i.lower()
 	target = message[0]
+	alasan = " ".join(message[1:]).strip()
 
 	# Make sure the user exists
 	targetUserID = userUtils.getIDSafe(target)
 	userID = userUtils.getID(fro)
+	if not alasan:
+		return "Provide best good reason"
 	if not targetUserID:
 		return "{}: user not found".format(target)
 	if targetUserID in (999, 1000):
 		return "NO!"
-		
+
 	# Put this user in restricted mode
 	userUtils.restrict(targetUserID)
 
@@ -331,7 +335,13 @@ def restrict(fro, chan, message):
 	if targetToken is not None:
 		targetToken.setRestricted()
 
-	log.rap(userID, "has put {} in restricted mode".format(target), True)
+	log.rap(userID, "has put {} in restricted mode because {}".format(target, alasan), True)
+        # send to discord
+	webhook = DiscordWebhook(url=glob.conf.config["discord"]["autobanned"])
+	embed = DiscordEmbed(title="RESTRICTED THANKS", description="{} has been restricted because {}".format(target, alasan), color=16711680)
+	webhook.add_embed(embed)
+	webhook.execute()
+
 	return "Bye bye {}. See you later, maybe.".format(target)
 
 def unrestrict(fro, chan, message):
@@ -1376,7 +1386,7 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 			dcdesc = "{} has been {} by {}".format(beatmapData["song_name"], status, name)
 
 		webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
-		embed = DiscordEmbed(description='{}'.format(dcdesc), color=242424)
+		embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(dcdesc, beatmapData["beatmapset_id"]), color=242424)
 		embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
 		embed.set_author(name='{}'.format(name), url='https://datenshi.xyz/u/{}'.format(str(userID)), icon_url='https://a.datenshi.xyz/{}'.format(str(userID)))
 		embed.set_footer(text='This map was {} from in-game'.format(status))

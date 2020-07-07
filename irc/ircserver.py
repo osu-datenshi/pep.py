@@ -350,7 +350,7 @@ class Client:
 			chat.IRCConnect(self.banchoUsername)
 
 			# IRC reply
-			self.replyCode(1, "Welcome to the Internet Relay Network")
+			self.replyCode(1, "Welcome to Datenshi IRC")
 			self.replyCode(2, "Your host is {}, running version pep.py-{}".format(self.server.host, glob.VERSION))
 			self.replyCode(3, "This server was created since the beginning")
 			self.replyCode(4, "{} pep.py-{} o o".format(self.server.host, glob.VERSION))
