@@ -1404,7 +1404,7 @@ def postAnnouncement(fro, chan, message): # Post to #announce ingame
 	name = userUtils.getUsername(userID)
 
 	# send to discord
-	webhook = DiscordWebhook(url=glob.conf.config["discord"]["announcement"])
+	webhook = DiscordWebhook(url=glob.conf.config["discord"]["announcement"], content='@everyone')
 	embed = DiscordEmbed(description='{}'.format(announcement), color=242424)
 	embed.set_author(name='Staff : {}'.format(name), url='https://datenshi.xyz/u/{}'.format(str(userID)), icon_url='https://a.datenshi.xyz/{}'.format(str(userID)))
 	embed.set_footer(text='This announcement was posted from in-game')

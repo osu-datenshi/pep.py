@@ -565,7 +565,7 @@ class Server:
 		self.host = glob.conf.config["irc"]["hostname"]
 		self.port = port
 		self.clients = {}  # Socket - - > Client instance.
-		self.motd = ["Welcome to pep.py's embedded IRC server!", "This is a VERY simple IRC server and it's still in beta.", "Expect things to crash and not work as expected :("]
+		self.motd = ["Welcome to Datenshi IRC server!", "This is a VERY simple IRC server and it's still in beta.", "Do not login IRC and In-Game TOGETHER! This make you crash!", "Expect things to crash and not work as expected :("]
 
 	def forceDisconnection(self, username, isBanchoUsername=True):
 		"""
