@@ -24,7 +24,7 @@ class tokenList:
 	def __exit__(self, exc_type, exc_val, exc_tb):
 		self._lock.release()
 
-	def addToken(self, userID, ip = "", irc = False, timeOffset=0, tournament=False):
+	def addToken(self, userID, ip = "", irc = False, timeOffset=0, tournament=True):
 		"""
 		Add a token object to tokens list
 

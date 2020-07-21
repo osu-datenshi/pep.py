@@ -29,7 +29,7 @@ def connect(timeOffset = 9):
 	token.timezone = 24+token.timeOffset
 	token.country = 111
 	glob.streams.broadcast("main", serverPackets.userPanel(999))
-	glob.streams.broadcast("main", serverPackets.userStats(999))
+	#glob.streams.broadcast("main", serverPackets.userStats(999))
 
 def disconnect():
 	"""
