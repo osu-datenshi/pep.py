@@ -258,7 +258,7 @@ class Client:
 
 		:return:
 		"""
-		self.replyCode(375, "- {} Message of the day - ".format(self.server.host))
+		self.replyCode(375, "- Datenshi Message of the day - ")
 		if len(self.server.motd) == 0:
 			self.replyCode(422, "MOTD File is missing")
 		else:
@@ -351,9 +351,9 @@ class Client:
 
 			# IRC reply
 			self.replyCode(1, "Welcome to Datenshi IRC")
-			self.replyCode(2, "Your host is {}, running version pep.py-{}".format(self.server.host, glob.VERSION))
+			self.replyCode(2, "Your host is {}".format(self.server.host))
 			self.replyCode(3, "This server was created since the beginning")
-			self.replyCode(4, "{} pep.py-{} o o".format(self.server.host, glob.VERSION))
+			self.replyCode(4, "{}".format(self.server.host))
 			self.sendLusers()
 			self.sendMotd()
 			self.__handleCommand = self.mainHandler

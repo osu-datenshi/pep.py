@@ -65,7 +65,7 @@ return the message or **False** if there's no response by the bot
 TODO: Change False to None, because False doesn't make any sense
 """
 def instantRestart(fro, chan, message):
-	glob.streams.broadcast("main", serverPackets.notification("(60 DETIK) RESTART BENTAR COK!"))
+	glob.streams.broadcast("main", serverPackets.notification("We are going to instants restart for 60sec"))
 	systemHelper.scheduleShutdown(0, True, delay=60)
 	return False
 
@@ -230,7 +230,7 @@ def silence(fro, chan, message):
 
         # send to discord
 	webhook = DiscordWebhook(url=glob.conf.config["discord"]["reports"])
-	embed = DiscordEmbed(description="{}".format(msg))
+	embed = DiscordEmbed(title="New Silence!", description="**Username** : {}\n**Reason** : {}".format(target, reason), color=16711680)
 	webhook.add_embed(embed)
 	log.info("[REPORT] REPORT masuk ke discord bro")
 	webhook.execute()
@@ -286,7 +286,7 @@ def ban(fro, chan, message):
 	log.rap(userID, "{} has been banned, reason {}".format(target, alasan), True)
         # send to discord
 	webhook = DiscordWebhook(url=glob.conf.config["discord"]["autobanned"])
-	embed = DiscordEmbed(title="BANNED THANKS", description="{} has been banned because {}".format(target, alasan), color=16711680)
+	embed = DiscordEmbed(title="NEW BANNED!", description="**Username** : {}\n**Reason** : {}".format(target, alasan), color=16711680)
 	webhook.add_embed(embed)
 	webhook.execute()
 
@@ -338,7 +338,7 @@ def restrict(fro, chan, message):
 	log.rap(userID, "has put {} in restricted mode because {}".format(target, alasan), True)
         # send to discord
 	webhook = DiscordWebhook(url=glob.conf.config["discord"]["autobanned"])
-	embed = DiscordEmbed(title="RESTRICTED THANKS", description="{} has been restricted because {}".format(target, alasan), color=16711680)
+	embed = DiscordEmbed(title="NEW RESTRICT!", description="**Username** : {}\n**Reason** : {}".format(target, alasan), color=16711680)
 	webhook.add_embed(embed)
 	webhook.execute()
 
@@ -364,7 +364,7 @@ def unrestrict(fro, chan, message):
 
 def restartShutdown(restart):
 	"""Restart (if restart = True) or shutdown (if restart = False) pep.py safely"""
-	msg = "Sorry bos, kita restart bentar buat maintenance. Score tetap kesubmit kok! Bancho akan {} dalam 5 detik..".format("restart" if restart else "shutdown")
+	msg = "The Bancho Server will going to restart!".format("restart" if restart else "shutdown")
 	systemHelper.scheduleShutdown(5, restart, msg)
 	return msg
 
@@ -829,7 +829,7 @@ def report(fro, chan, message):
 
 		# send to discord
 		webhook = DiscordWebhook(url=glob.conf.config["discord"]["reports"])
-		embed = DiscordEmbed(title="LAPORAN MASUK BOS!!", description="{}".format(adminMsg))
+		embed = DiscordEmbed(title="NEW REPORTS!!", description="{}".format(adminMsg))
 		webhook.add_embed(embed)
 		log.info("[REPORT] REPORT masuk ke discord bro")
 		webhook.execute()
