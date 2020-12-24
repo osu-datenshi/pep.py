@@ -65,7 +65,7 @@ def logMessage(message, alertType = "INFO", messageColor = bcolors.ENDC, discord
 
 	# Log to file if needed
 	if of is not None:
-		glob.fileBuffers.write("/var/www/statik/irc/"+of, finalMessage+ENDL)
+		glob.fileBuffers.write(".data/"+of, finalMessage+ENDL)
 
 def warning(message, discord = None, alertDev = False):
 	"""
