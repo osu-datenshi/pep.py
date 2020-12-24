@@ -174,7 +174,7 @@ def kick(fro, chan, message):
 
 def fokabotReconnect(fro, chan, message):
 	# Check if the bot is already connected
-	if glob.tokens.getTokenFromUserID(999) is not None:
+	if glob.tokens.getTokenFromUserID(1) is not None:
 		return "{} is already connected to Bancho".format(glob.BOT_NAME)
 
 	# Bot is not connected, connect it
@@ -273,7 +273,7 @@ def ban(fro, chan, message):
 		return "provide good best reason."
 	if not targetUserID:
 		return "{}: user not found".format(target)
-	if targetUserID in (999, 1000):
+	if targetUserID in (1, 2):
 		return "NO!"
 	# Set allowed to 0
 	userUtils.ban(targetUserID)
@@ -324,7 +324,7 @@ def restrict(fro, chan, message):
 		return "Provide best good reason"
 	if not targetUserID:
 		return "{}: user not found".format(target)
-	if targetUserID in (999, 1000):
+	if targetUserID in (1, 2):
 		return "NO!"
 
 	# Put this user in restricted mode
@@ -1051,7 +1051,7 @@ def multiplayer(fro, chan, message):
 		if token is None:
 			raise exceptions.invalidUserException("That user is not connected to bancho right now.")
 		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		_match.invite(999, userID)
+		_match.invite(1, userID)
 		token.enqueue(serverPackets.notification("Please accept the invite you've just received from {} to "
 												 "enter your tourney match.".format(glob.BOT_NAME)))
 		return "An invite to this match has been sent to {}".format(username)

@@ -24,7 +24,7 @@ class channel:
 		self.hidden = hidden
 
 		# Make Foka join the channel
-		fokaToken = glob.tokens.getTokenFromUserID(999)
+		fokaToken = glob.tokens.getTokenFromUserID(1)
 		if fokaToken is not None:
 			try:
 				fokaToken.joinChannel(self)

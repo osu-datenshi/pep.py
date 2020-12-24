@@ -66,11 +66,11 @@ class token:
 		self.spamRate = 0
 
 		# Stats cache
-		if userID == 1000:
+		if userID == 2:
 			self.actionID = actions.WATCHING
 		else:
 			self.actionID = actions.IDLE
-		if userID == 1000:
+		if userID == 2:
 			self.actionText = "Nekopoi"
 		else:
 			self.actionText = ""
@@ -121,7 +121,7 @@ class token:
 			self._bufferLock.acquire()
 
 			# Never enqueue for IRC clients or Bot
-			if self.irc or self.userID < 999:
+			if self.irc or self.userID < 1:
 				return
 
 			# Avoid memory leaks
@@ -390,7 +390,7 @@ class token:
 		# Logout event
 		logoutEvent.handle(self, deleteToken=self.irc)
 
-	def silence(self, seconds = None, reason = "", author = 999):
+	def silence(self, seconds = None, reason = "", author = 1):
 		"""
 		Silences this user (db, packet and token)
 

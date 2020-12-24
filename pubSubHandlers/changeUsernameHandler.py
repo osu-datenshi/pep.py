@@ -11,11 +11,11 @@ def handleUsernameChange(userID, newUsername, targetToken=None):
 		if targetToken is not None:
 			targetToken.kick("Your username has been changed to {}. Please log in again.".format(newUsername), "username_change")
 	except userUtils.usernameAlreadyInUseError:
-		log.rap(999, "Username change: {} is already in use!", through="Bancho")
+		log.rap(1, "Username change: {} is already in use!", through="Bancho")
 		if targetToken is not None:
 			targetToken.kick("There was a critical error while trying to change your username. Please contact a developer.", "username_change_fail")
 	except userUtils.invalidUsernameError:
-		log.rap(999, "Username change: {} is not a valid username!", through="Bancho")
+		log.rap(1, "Username change: {} is not a valid username!", through="Bancho")
 		if targetToken is not None:
 			targetToken.kick("There was a critical error while trying to change your username. Please contact a developer.", "username_change_fail")
 

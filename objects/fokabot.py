@@ -17,8 +17,8 @@ def connect(timeOffset = 9):
 
 	:return:
 	"""
-	glob.BOT_NAME = userUtils.getUsername(999)
-	token = glob.tokens.addToken(999)
+	glob.BOT_NAME = userUtils.getUsername(1)
+	token = glob.tokens.addToken(1)
 	token.actionID = actions.IDLE
 	token.actionText = "\n-- Welcome to Datenshi --"
 	#token.pp = 69
@@ -28,7 +28,7 @@ def connect(timeOffset = 9):
 	token.timeOffset = timeOffset
 	token.timezone = 24+token.timeOffset
 	token.country = 111
-	glob.streams.broadcast("main", serverPackets.userPanel(999))
+	glob.streams.broadcast("main", serverPackets.userPanel(1))
 	#glob.streams.broadcast("main", serverPackets.userStats(999))
 
 def disconnect():
@@ -37,7 +37,7 @@ def disconnect():
 
 	:return:
 	"""
-	glob.tokens.deleteToken(glob.tokens.getTokenFromUserID(999))
+	glob.tokens.deleteToken(glob.tokens.getTokenFromUserID(1))
 
 def fokabotResponse(fro, chan, message):
 	"""

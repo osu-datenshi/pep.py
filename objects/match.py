@@ -702,7 +702,7 @@ class match:
 			return
 
 		# BOT IS BUSY!!!
-		if to == 999:
+		if to == 1:
 			chat.sendMessage(glob.BOT_NAME, froToken.username, "I would love to join your match, but I'm busy keeping the server up and running. Sorry. Beep Boop.")
 
 		# Send message
