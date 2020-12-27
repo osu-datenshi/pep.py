@@ -1,6 +1,8 @@
 import os
 import sys
 import threading
+import schedule
+import time
 from multiprocessing.pool import ThreadPool
 import tornado.gen
 import tornado.httpserver
@@ -309,6 +311,36 @@ if __name__ == "__main__":
 			"peppy:notification": notificationHandler.handler(),
 			"peppy:set_main_menu_icon": setMainMenuIconHandler.handler(),
 		}).start()
+
+		# DUMMY TEST
+		def ping():
+				try:
+					glob.db.execute("SELECT 1+1")
+					consoleHelper.printColored("the command has been execute!", bcolors.GREEN)
+				except:
+					consoleHelper.printColored("not ok", bcolors.RED)
+		# setting ke 1 jam nih
+		schedule.every(3600).seconds.do(ping)
+
+		use_threading = True
+		if use_threading:
+			import threading
+
+			schedule_thread = threading.Event()
+
+			class ScheduleThread(threading.Thread):
+				@classmethod
+				def run(cls):
+					while not schedule_thread.is_set():
+						schedule.default_scheduler.run_pending()
+						time.sleep(0.5)
+
+			continuous_thread = ScheduleThread()
+			continuous_thread.start()
+		else:
+			while True:
+				schedule.run_pending()
+				time.sleep(0.5)
 
 		# Start tornado
 		glob.application.listen(serverPort)

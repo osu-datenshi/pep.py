@@ -76,6 +76,7 @@ class config:
 			parsedConfig.get("discord", "anticheat")
 			parsedConfig.get("discord", "ranked")
 			parsedConfig.get("discord", "announcement")
+			parsedConfig.get("discord", "autobanned")
 
 			parsedConfig.get("datadog", "enable")
 			parsedConfig.get("datadog", "apikey")
