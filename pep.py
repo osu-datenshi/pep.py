@@ -312,13 +312,14 @@ if __name__ == "__main__":
 			"peppy:set_main_menu_icon": setMainMenuIconHandler.handler(),
 		}).start()
 
-		# DUMMY TEST
+		# Automated query biar ga gone mysql
 		def ping():
 				try:
 					glob.db.execute("SELECT 1+1")
-					consoleHelper.printColored("the command has been execute!", bcolors.GREEN)
+					log.info("[AUTOMATED QUERY] has been execute!")
 				except:
-					consoleHelper.printColored("not ok", bcolors.RED)
+					log.info("[AUTOMATED QUERY] error! the connection will restart!")
+					glob.db = dbConnector.db(glob.conf.config["db"]["host"], glob.conf.config["db"]["username"], glob.conf.config["db"]["password"], glob.conf.config["db"]["database"], int(glob.conf.config["db"]["workers"]))
 		# setting ke 1 jam nih
 		schedule.every(3600).seconds.do(ping)
 
