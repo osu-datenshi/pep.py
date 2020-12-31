@@ -1462,6 +1462,9 @@ def whitelistUserPPLimit(fro, chan, message):
 	userUtils.whitelistUserPPLimit(userID, rx)
 	return "{user} has been whitelisted from autorestrictions on {rx}.".format(user=target, rx='relax' if rx else 'vanilla')
 
+def okegan(from_user, from_chan, msg):
+	return "oke gan"
+
 def bloodcat(fro, chan, message):
 	try:
 		matchID = getMatchIDFromChannel(chan)
@@ -1538,6 +1541,9 @@ commands = [
 	{
 		"trigger": "!roll",
 		"callback": roll
+	}, {
+		"trigger": "T3I",
+		"callback": okegan
 	}, {
 		"trigger": "!faq",
 		"syntax": "<name>",
