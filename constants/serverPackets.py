@@ -92,16 +92,19 @@ def userPanel(userID, force = False):
 
 	# Get user data
 	username = userToken.username
+	# userID: (TZ offset, Country ID)
+	custom_userdata = {
+		3: (9, 111)
+	}
 	# Custom Timezone
-	if userID in (1000, 1001):
-		timezone = 24+9
-	else:
-		timezone = 24+userToken.timeOffset
 	# Custom Countries for Users
 	# 111 = Japan
-	if userID in (1000, 1001):
-		country = 111
+	if userID in custom_userdata:
+		hax_data = custom_userdata[userID]
+		timezone = 24 + hax_data[0]
+		country  = hax_data[1]
 	else:
+		timezone = 24+userToken.timeOffset
 		country = userToken.country
 	gameRank = userToken.gameRank
 	latitude = userToken.getLatitude()
@@ -112,8 +115,7 @@ def userPanel(userID, force = False):
 	userRank = 0
 	if username == glob.BOT_NAME:
 		userRank |= userRanks.MOD
-	# 1000 = Aoba's User ID
-	elif userID == 1000:
+	elif userID == 2:
 		userRank |= userRanks.PEPPY
 	elif userUtils.isInPrivilegeGroup(userID, "Developer"):
 		userRank |= userRanks.ADMIN
