@@ -528,20 +528,47 @@ class Client:
 		"""AWAY command handler"""
 		response = chat.IRCAway(self.banchoUsername, " ".join(arguments))
 		self.replyCode(response, "You are no longer marked as being away" if response == 305 else "You have been marked as being away")
-
+	
+	def listHandler(self, _, arguments):
+		"""LIST command handler"""
+		self.replyCode(321, "Channel :Users  Name")
+		for chanName, channel in glob.channels.items():
+			userCount = 1
+			isJoined  = chanName in self.joinedChannels
+			if channel.hidden and not isJoined:
+				continue
+			else:
+				pass
+			for _, otherClient in self.server.clients.items():
+				if otherClient == self:
+					continue
+				if chanName in otherClient.joinedChannels:
+					userCount += 1
+				pass
+			self.replyCode(322, "{} {} :{}".format(chan_name, userCount, channel.description))
+		self.replyCode(323, ":End of LIST")
+		pass
+	
+	def nickHandler(self, _, arguments):
+		pass
+	
+	def userHostHandler(self, _, arguments):
+		log.info("USERHOST REQUEST {}".format(' '.join(arguments)))
+		pass
+	
 	def mainHandler(self, command, arguments):
 		"""
 		Handler for post-login commands
 		"""
 		handlers = {
 			"AWAY": self.awayHandler,
-			#"ISON": ison_handler,
+			#"ISON": isonHandler,
 			"JOIN": self.joinHandler,
-			#"LIST": list_handler,
+			"LIST": self.listHhandler,
 			"LUSERS": self.lusersHandler,
-			#"MODE": mode_handler,
+			#"MODE": modeHandler,
 			"MOTD": self.motdHandler,
-			#"NICK": nick_handler,
+			"NICK": self.nickHandler,
 			#"NOTICE": notice_and_privmsg_handler,
 			"PART": self.partHandler,
 			"PING": self.pingHandler,
@@ -553,6 +580,7 @@ class Client:
 			#"WHO": who_handler,
 			#"WHOIS": whois_handler,
 			"USER": self.dummyHandler,
+			"USERHOST", self.userHostHandler,
 		}
 		try:
 			handlers[command](command, arguments)

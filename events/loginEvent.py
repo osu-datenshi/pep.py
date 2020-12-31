@@ -63,9 +63,9 @@ def handle(tornadoRequest):
 
 		# Make sure we are not banned or locked
 		priv = userUtils.getPrivileges(userID)
-		if userUtils.isBanned(userID) and priv & privileges.USER_PENDING_VERIFICATION == 0:
+		if userUtils.isBanned(userID) and not (priv & privileges.USER_PENDING_VERIFICATION):
 			raise exceptions.loginBannedException()
-		if userUtils.isLocked(userID) and priv & privileges.USER_PENDING_VERIFICATION == 0:
+		if userUtils.isLocked(userID) and not (priv & privileges.USER_PENDING_VERIFICATION):
 			raise exceptions.loginLockedException()
 
 		# 2FA check
@@ -77,7 +77,7 @@ def handle(tornadoRequest):
 
 		# Verify this user (if pending activation)
 		firstLogin = False
-		if priv & privileges.USER_PENDING_VERIFICATION > 0 or not userUtils.hasVerifiedHardware(userID):
+		if priv & privileges.USER_PENDING_VERIFICATION or not userUtils.hasVerifiedHardware(userID):
 			if userUtils.verifyUser(userID, clientData):
 				# Valid account
 				log.info("Account ID {} verified successfully!".format(userID))
@@ -339,7 +339,7 @@ def handle(tornadoRequest):
 		# Using oldoldold client, we don't have client data. Force update.
 		# (we don't use enqueue because we don't have a token since login has failed)
 		responseData += serverPackets.forceUpdate()
-		responseData += serverPackets.notification("Hory shitto, your client is TOO old! Nice prehistory! Please turn update it from the settings!")
+		responseData += serverPackets.notification("Hory shitto, your client is TOO old! Nice prehistory! Please update the client from settings!")
 	except:
 		log.error("Unknown error!\n```\n{}\n{}```".format(sys.exc_info(), traceback.format_exc()))
 	finally:
