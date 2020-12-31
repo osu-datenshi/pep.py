@@ -389,6 +389,7 @@ class Client:
 		userID = self.supposedUserID
 		userPriv = userUtils.getPrivileges(userID)
 		isChatMod = bool(userPriv & privileges.ADMIN_CHAT_MOD)
+		
 
 		for channel in channels:
 			# Make sure we are not already in that channel
@@ -406,8 +407,8 @@ class Client:
 				# Let everyone in this channel know that we've joined
 				self.messageChannel(channel, "{} JOIN".format(self.IRCUsername), channel, True)
 				if isChatMod:
-					self.messageChannel(channel, "{} MODE {}".format(glob.BOT_NAME, '+o'), self.IRCUsername, True)
-				self.message(":{} MODE {} {}".format(glob.BOT_NAME, '+oi', glob.BOT_NAME))
+					self.messageChannel(channel, "{} MODE {}".format(glob.BOT_NAME, self.IRCUsername), '+o', True)
+				self.message(":{} MODE {} {}".format(glob.BOT_NAME, glob.BOT_NAME, '+oi'))
 
 				# Send channel description (topic)
 				description = glob.channels.channels[channel].description
@@ -544,7 +545,7 @@ class Client:
 		isSelf = arguments[0] in [self.IRCUsername]
 		channel = None
 		if not isSelf:
-			channel = glob.channels.channels.fetch(arguments[0],None)
+			channel = glob.channels.channels.get(arguments[0],None)
 		if not isSelf and channel is None:
 			self.replyCode(502, "yuh")
 			return
