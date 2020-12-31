@@ -16,6 +16,7 @@ import traceback
 
 import raven
 
+from common.constants import privileges
 from common.log import logUtils as log
 from common.ripple import userUtils
 from helpers import chatHelper as chat
@@ -266,9 +267,9 @@ class Client:
 				self.replyCode(372, "- {}".format(i))
 		self.replyCode(376, "End of MOTD command")
 
-	"""""""""
+	"""
 	HANDLERS
-	"""""""""
+	"""
 	def dummyHandler(self, command, arguments):
 		pass
 
@@ -385,6 +386,9 @@ class Client:
 
 		# Get channels to join list
 		channels = arguments[0].split(",")
+		userID = self.supposedUserID
+		userPriv = userUtils.getPrivileges(userID)
+		isChatMod = bool(userPriv & privileges.ADMIN_CHAT_MOD)
 
 		for channel in channels:
 			# Make sure we are not already in that channel
@@ -401,6 +405,9 @@ class Client:
 
 				# Let everyone in this channel know that we've joined
 				self.messageChannel(channel, "{} JOIN".format(self.IRCUsername), channel, True)
+				if isChatMod:
+					self.messageChannel(channel, "{} MODE {}".format(glob.BOT_NAME, '+o'), self.IRCUsername, True)
+				self.message(":{} MODE {} {}".format(glob.BOT_NAME, '+oi', glob.BOT_NAME))
 
 				# Send channel description (topic)
 				description = glob.channels.channels[channel].description
@@ -408,6 +415,7 @@ class Client:
 					self.replyCode(331, "No topic is set", channel=channel)
 				else:
 					self.replyCode(332, description, channel=channel)
+				self.message(":{} MODE {} {}".format(glob.BOT_NAME, '+nt', channel))
 
 				# Build connected users list
 				if "chat/{}".format(channel) not in glob.streams.streams:
@@ -529,10 +537,40 @@ class Client:
 		response = chat.IRCAway(self.banchoUsername, " ".join(arguments))
 		self.replyCode(response, "You are no longer marked as being away" if response == 305 else "You have been marked as being away")
 	
+	def modeHandler(self, _, arguments):
+		"""MODE command handler"""
+		if not arguments:
+			return
+		isSelf = arguments[0] in [self.IRCUsername]
+		channel = None
+		if not isSelf:
+			channel = glob.channels.channels.fetch(arguments[0],None)
+		if not isSelf and channel is None:
+			self.replyCode(502, "yuh")
+			return
+		if len(arguments) == 1:
+			if isSelf:
+				self.replyCode(221, "{} +i".format(arguments[0]))
+			else:
+				self.replyCode(324, "{} +nt".format(arguments[0]))
+		else:
+			if not arguments[1]:
+				return
+			elif arguments[1][0] == '-':
+				return
+			elif arguments[1][0] == '+':
+				arguments[1] = arguments[1][1:]
+			if not arguments[1]:
+				return
+			elif arguments[1][0] == 'b':
+				self.replyCode(368, "{} :sure".format(arguments[0]))
+			pass
+		pass
+	
 	def listHandler(self, _, arguments):
 		"""LIST command handler"""
 		self.replyCode(321, "Channel :Users  Name")
-		for chanName, channel in glob.channels.items():
+		for chanName, channel in glob.channels.channels.items():
 			userCount = 1
 			isJoined  = chanName in self.joinedChannels
 			if channel.hidden and not isJoined:
@@ -545,7 +583,7 @@ class Client:
 				if chanName in otherClient.joinedChannels:
 					userCount += 1
 				pass
-			self.replyCode(322, "{} {} :{}".format(chan_name, userCount, channel.description))
+			self.replyCode(322, "{} {} :{}".format(chanName, userCount, channel.description))
 		self.replyCode(323, ":End of LIST")
 		pass
 	
@@ -566,7 +604,7 @@ class Client:
 			"JOIN": self.joinHandler,
 			"LIST": self.listHandler,
 			"LUSERS": self.lusersHandler,
-			#"MODE": modeHandler,
+			"MODE": self.modeHandler,
 			"MOTD": self.motdHandler,
 			"NICK": self.nickHandler,
 			#"NOTICE": notice_and_privmsg_handler,
