@@ -564,7 +564,7 @@ class Client:
 			"AWAY": self.awayHandler,
 			#"ISON": isonHandler,
 			"JOIN": self.joinHandler,
-			"LIST": self.listHhandler,
+			"LIST": self.listHandler,
 			"LUSERS": self.lusersHandler,
 			#"MODE": modeHandler,
 			"MOTD": self.motdHandler,
@@ -580,7 +580,7 @@ class Client:
 			#"WHO": who_handler,
 			#"WHOIS": whois_handler,
 			"USER": self.dummyHandler,
-			"USERHOST", self.userHostHandler,
+			"USERHOST": self.userHostHandler,
 		}
 		try:
 			handlers[command](command, arguments)
