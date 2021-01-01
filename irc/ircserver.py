@@ -406,9 +406,8 @@ class Client:
 
 				# Let everyone in this channel know that we've joined
 				self.messageChannel(channel, "{} JOIN".format(self.IRCUsername), channel, True)
-				self.message(":{} MODE {} {}".format(glob.BOT_NAME, '+oiB', glob.BOT_NAME))
 				if isChatMod:
-					self.messageChannel(channel, "{} MODE {}".format(glob.BOT_NAME, '+o'), self.IRCUsername, True)
+					self.messageChannel(channel, "{} MODE {} {}".format(glob.BOT_NAME, channel, '+o'), self.IRCUsername, True)
 
 				# Send channel description (topic)
 				description = glob.channels.channels[channel].description
@@ -584,7 +583,7 @@ class Client:
 				if chanName in otherClient.joinedChannels:
 					userCount += 1
 				pass
-			self.replyCode(322, "{} {} :{}".format(chanName, userCount, channel.description))
+			self.replyCode(322, "{} {} {} :{}".format(self.IRCUsername, chanName, userCount, channel.description))
 		self.replyCode(323, ":End of LIST")
 		pass
 	
