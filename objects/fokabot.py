@@ -67,28 +67,26 @@ def fokabotResponse(fro, chan, message):
 	userID = userUtils.getID(fro)
 	userPr = userUtils.getPrivileges(userID)
 	for command in yohaneCommands.commands:
-		
-	for i in yohaneCommands.commands:
 		# Loop though all commands
-		if re.compile("^{}( (.+)?)?$".format(i["trigger"])).match(msg):
+		if re.compile("^{}( (.+)?)?$".format(command["trigger"])).match(msg):
 			# message has triggered a command
 
 			# Make sure the user has right permissions
 			_userId = userUtils.getID(fro)
-			if i["privileges"] is not None:
-				if userUtils.getPrivileges(_userId) & i["privileges"] != i['privileges']:
+			if command["privileges"] is not None:
+				if userUtils.getPrivileges(_userId) & command["privileges"] != command['privileges']:
 					return False
 
 			# Check argument number
 			message = message.split(" ")
-			if i["syntax"] != "" and len(message) <= len(i["syntax"].split(" ")):
-				return "Wrong syntax: {} {}".format(i["trigger"], i["syntax"])
+			if command["syntax"] != "" and len(message) <= len(command["syntax"].split(" ")):
+				return "Wrong syntax: {} {}".format(command["trigger"], command["syntax"])
 
 			# Return response or execute callback
-			if i["callback"] is None:
-				return i["response"]
+			if command["callback"] is None:
+				return command["response"]
 			else:
-				return i["callback"](fro, chan, message[1:])
+				return command["callback"](fro, chan, message[1:])
 
 	# No commands triggered
 	return False

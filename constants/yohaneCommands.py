@@ -677,10 +677,6 @@ def getBeatmapRequest(fro, chan, message): # Grab a random beatmap request. TODO
 	
 	return "The beatmap ranking system has been reworked."
 
-def mm00(fro, chan, message):
-	random.seed()
-	return random.choice(["meme", "MA MAURO ESISTE?"])
-
 def pp(fro, chan, message):
 	if chan.startswith("#"):
 		return False
