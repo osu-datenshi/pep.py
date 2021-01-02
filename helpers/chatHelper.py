@@ -305,7 +305,7 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 			glob.schiavo.sendChatlog("**{fro} @ {to}:** {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
 		
 		# Some bot message
-		if isChannel or forBot:
+		if (isChannel or forBot) and not (fro == glob.BOT_NAME):
 			if botCommand:
 				fokaMessage = fokabot.fokabotCommands(token.username, to, message)
 			else:
