@@ -99,12 +99,12 @@ def partChannel(userID = 0, channel = "", token = None, toIRC = True, kick = Fal
 				s = userID
 			else:
 				s = token.spectatingUserID
-			channel = "{}_{}".format(chatChannel.SPECTATOR_PREFIX, s)
+			channel = "{}_{}".format(chatChannels.SPECTATOR_PREFIX, s)
 		elif channel == "#multiplayer":
-			channel = "{}_{}".format(chatChannel.MULTIPLAYER_PREFIX, token.matchID)
-		elif channel.startswith(f"{chatChannel.SPECTATOR_PREFIX}_"):
+			channel = "{}_{}".format(chatChannels.MULTIPLAYER_PREFIX, token.matchID)
+		elif channel.startswith(f"{chatChannels.SPECTATOR_PREFIX}_"):
 			channelClient = "#spectator"
-		elif channel.startswith(f"{chatChannel.MULTIPLAYER_PREFIX}_"):
+		elif channel.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_"):
 			channelClient = "#multiplayer"
 
 		# Make sure the channel exists

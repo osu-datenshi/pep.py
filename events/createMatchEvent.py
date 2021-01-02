@@ -19,7 +19,7 @@ def handle(userToken, packetData):
 
 		# Create a match object
 		# TODO: Player number check
-		matchID = glob.matches.createMatch(matchName, packetData["matchPassword"].strip(), packetData["beatmapID"], packetData["beatmapName"], packetData["beatmapMD5"], packetData["gameMode"], userID)
+		matchID = glob.matches.createMatch(matchName, packetData["matchPassword"].strip(), packetData["beatmapID"], packetData["beatmapName"], packetData["beatmapMD5"], packetData["gameMode"], userID, creatorUserID=userID)
 		
 		# Make sure the match has been created
 		if matchID not in glob.matches.matches:
