@@ -266,6 +266,18 @@ def _wrapper_():
         _mainTimer(matchID, timer)
         forceReady()
         timer.start()
+    
+    def abortTimer(sender, channel, message):
+        userID  = userUtils.getIDSafe(sender)
+        matchID = getCurrentMatchID(channel)
+        match   = getCurrentMatch(channel)
+        level   = getMPPermissionLevel(match,userID)
+        ptimer  = _mainTimer(matchID)
+        if level < ptimer.level:
+            return "Ask the room {perm_level[ptimer.level]} to abort it!"
+        else:
+            ptimer.abort()
+            return None
 
     def invite(sender, channel, message):
         if len(message) < 1:
@@ -461,7 +473,7 @@ def _wrapper_():
         _match.sendUpdates()
         return "Match scoring type set to scorev{}".format(message[0])
 
-    command_t = namedtuple('command_t', 'mpOnly', 'fun', 'syntax', 'description', 'perm')
+    command_t = namedtuple('command_t', ('mpOnly', 'fun', 'syntax', 'description', 'perm'))
     commands = {
         "listref": command_t(listReferee, True, '', 'list current match referees', 'basic'),
         "addref": command_t(addReferee, True, '<username>', 'add user to match referees', 'owner'),
