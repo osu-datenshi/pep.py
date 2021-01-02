@@ -4,7 +4,7 @@ import re
 from common import generalUtils
 from common.constants import actions
 from common.ripple import userUtils
-from constants import fokabotCommands
+from constants import yohaneCommands, yohaneReactions
 from constants import serverPackets
 from objects import glob
 
@@ -48,7 +48,22 @@ def fokabotResponse(fro, chan, message):
 	:param message: chat mesage
 	:return: FokaBot's response or False if no response
 	"""
-	for i in fokabotCommands.commands:
+	msg = message.strip()
+	
+	for reaction in yohaneReactions.triggers:
+		callIt = False
+		if reaction['match'] == 'exact':
+			callIt = reaction['trigger'] == msg
+		elif reaction['match'] == 'partial':
+			callIt = reaction['trigger'] in msg
+		elif reaction['match'] == 'word':
+			callIt = reaction['trigger'] in msg.split()
+		elif reaction['match'] in ('regex', 'regexp'):
+			callIt = re.compile(reaction['trigger']).match(msg)
+		if callIt:
+			return reaction['callback'](fro, chan, message)
+	
+	for i in yohaneCommands.commands:
 		# Loop though all commands
 		if re.compile("^{}( (.+)?)?$".format(i["trigger"])).match(message.strip()):
 			# message has triggered a command

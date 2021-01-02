@@ -9,11 +9,14 @@ import time
 from common import generalUtils
 from common.constants import mods
 from common.log import logUtils as log
+from common.datenshi import rankUtils
 from common.ripple import userUtils
-from constants import exceptions, slotStatuses, matchModModes, matchTeams, matchTeamTypes, matchScoringTypes
 from common.constants import gameModes
 from common.constants import privileges
+from constants import exceptions, slotStatuses, matchModModes, matchTeams, matchTeamTypes, matchScoringTypes
+from constants import chatChannels
 from constants import serverPackets
+from constants import yohaneMultiplayer as MP
 from helpers import aobaHelper
 from helpers import systemHelper
 from objects import fokabot
@@ -275,6 +278,8 @@ def ban(fro, chan, message):
 		return "{}: user not found".format(target)
 	if targetUserID in (1, 2):
 		return "NO!"
+	if isInPrivilegeGroup(targetUserID, 'Chat Moderators'):
+		return "u wot."
 	# Set allowed to 0
 	userUtils.ban(targetUserID)
 
@@ -326,6 +331,8 @@ def restrict(fro, chan, message):
 		return "{}: user not found".format(target)
 	if targetUserID in (1, 2):
 		return "NO!"
+	if isInPrivilegeGroup(targetUserID, 'Chat Moderators'):
+		return "u wot."
 
 	# Put this user in restricted mode
 	userUtils.restrict(targetUserID)
@@ -509,63 +516,6 @@ def getPPMessage(userID, just_data = False):
 		# TODO: print exception
 	#	return False
 
-def tillerinoNp(fro, chan, message):
-	try:
-		# Mirror list trigger for #spect_
-		if chan.startswith("#spect_"):
-			spectatorHostUserID = getSpectatorHostUserIDFromChannel(chan)
-			spectatorHostToken = glob.tokens.getTokenFromUserID(spectatorHostUserID, ignoreIRC=True)
-			if spectatorHostToken is None:
-				return False
-			return mirrorMessage(spectatorHostToken.beatmapID)
-
-		# Run the command in PM only
-		if chan.startswith("#"):
-			return False
-
-		playWatch = message[1] == "playing" or message[1] == "watching"
-		# Get URL from message
-		if message[1] == "listening":
-			beatmapURL = str(message[3][1:])
-		elif playWatch:
-			beatmapURL = str(message[2][1:])
-		else:
-			return False
-
-		modsEnum = 0
-		mapping = {
-			"-Easy": mods.EASY,
-			"-NoFail": mods.NOFAIL,
-			"+Hidden": mods.HIDDEN,
-			"+HardRock": mods.HARDROCK,
-			"+Nightcore": mods.NIGHTCORE,
-			"+DoubleTime": mods.DOUBLETIME,
-			"-HalfTime": mods.HALFTIME,
-			"+Flashlight": mods.FLASHLIGHT,
-			"-SpunOut": mods.SPUNOUT
-		}
-
-		if playWatch:
-			for part in message:
-				part = part.replace("\x01", "")
-				if part in mapping.keys():
-					modsEnum += mapping[part]
-
-		# Get beatmap id from URL
-		beatmapID = fokabot.npRegex.search(beatmapURL).groups(0)[0]
-
-		# Update latest tillerino song for current token
-		token = glob.tokens.getTokenFromUsername(fro)
-		if token is not None:
-			token.tillerino = [int(beatmapID), modsEnum, -1.0]
-		userID = token.userID
-
-		# Return tillerino message
-		return getPPMessage(userID)
-	except:
-		return False
-
-
 def tillerinoMods(fro, chan, message):
 	try:
 		# Run the command in PM only
@@ -715,9 +665,7 @@ def tillerinoLast(fro, chan, message):
 		log.error(a)
 		return False
 
-
 def getBeatmapRequest(fro, chan, message): # Grab a random beatmap request. TODO: Add gamemode handling to this and !request
-	
 	request = glob.db.fetch("SELECT * FROM rank_requests LIMIT 1;")
 	if request is not None:
 		username = userUtils.getUsername(request['userid'])
@@ -728,8 +676,6 @@ def getBeatmapRequest(fro, chan, message): # Grab a random beatmap request. TODO
 		return "All nominations have been checked. Thank you for your hard work! :)"
 	
 	return "The beatmap ranking system has been reworked."
-
-
 
 def mm00(fro, chan, message):
 	random.seed()
@@ -858,7 +804,7 @@ def report(fro, chan, message):
 	return False
 
 def getMatchIDFromChannel(chan):
-	if not chan.lower().startswith("#multi_"):
+	if not chan.lower().startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_"):
 		raise exceptions.wrongChannelException()
 	parts = chan.lower().split("_")
 	if len(parts) < 2 or not parts[1].isdigit():
@@ -869,7 +815,7 @@ def getMatchIDFromChannel(chan):
 	return matchID
 
 def getSpectatorHostUserIDFromChannel(chan):
-	if not chan.lower().startswith("#spect_"):
+	if not chan.lower().startswith(f"{chatChannels.SPECTATOR_PREFIX}_"):
 		raise exceptions.wrongChannelException()
 	parts = chan.lower().split("_")
 	if len(parts) < 2 or not parts[1].isdigit():
@@ -878,399 +824,7 @@ def getSpectatorHostUserIDFromChannel(chan):
 	return userID
 
 def multiplayer(fro, chan, message):
-	def mpListRefer():
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		return str(_match.refers)
-
-	def mpAddRefer():
-		if len(message) < 2:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp addref <user>")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		username = message[1].strip()
-		if not username:
-			raise exceptions.invalidArgumentsException("Please provide a username")
-		userID = userUtils.getIDSafe(username)
-		if userID is None:
-			raise exceptions.userNotFoundException("No such user")
-		_match.addRefer(userID)
-		return "Added {} to refers".format(username)
-
-	def mpRemoveRefer():
-		if len(message) < 2:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp rmref <user>")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		username = message[1].strip()
-		if not username:
-			raise exceptions.invalidArgumentsException("Please provide a username")
-		userID = userUtils.getIDSafe(username)
-		if userID is None:
-			raise exceptions.userNotFoundException("No such user")
-		_match.removeRefer(userID)
-		return "Removed {} from refers".format(username)
-
-	def mpMake():
-		if len(message) < 2:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp make <name>")
-		matchName = " ".join(message[1:]).strip()
-		if not matchName:
-			raise exceptions.invalidArgumentsException("Match name must not be empty!")
-		matchID = glob.matches.createMatch(matchName, generalUtils.stringMd5(generalUtils.randomString(32)), 0, "Tournament", "", 0, -1, isTourney=True)
-		glob.matches.matches[matchID].sendUpdates()
-		return "Tourney match #{} created!".format(matchID)
-
-	def mpJoin():
-		if len(message) < 2 or not message[1].isdigit():
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp join <id>")
-		matchID = int(message[1])
-		userToken = glob.tokens.getTokenFromUsername(fro, ignoreIRC=True)
-		if userToken is None:
-			raise exceptions.invalidArgumentsException(
-				"No game clients found for {}, can't join the match. "
-			    "If you're a referee and you want to join the chat "
-				"channel from IRC, use /join #multi_{} instead.".format(fro, matchID)
-			)
-		userToken.joinMatch(matchID)
-		return "Attempting to join match #{}!".format(matchID)
-
-	def mpClose():
-		matchID = getMatchIDFromChannel(chan)
-		glob.matches.disposeMatch(matchID)
-		return "Multiplayer match #{} disposed successfully".format(matchID)
-
-	def mpLock():
-		matchID = getMatchIDFromChannel(chan)
-		glob.matches.matches[matchID].isLocked = True
-		return "This match has been locked"
-
-	def mpUnlock():
-		matchID = getMatchIDFromChannel(chan)
-		glob.matches.matches[matchID].isLocked = False
-		return "This match has been unlocked"
-
-	def mpSize():
-		if len(message) < 2 or not message[1].isdigit() or int(message[1]) < 2 or int(message[1]) > 16:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp size <slots(2-16)>")
-		matchSize = int(message[1])
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		_match.forceSize(matchSize)
-		return "Match size changed to {}".format(matchSize)
-
-	def mpMove():
-		if len(message) < 3 or not message[2].isdigit() or int(message[2]) < 0 or int(message[2]) > 16:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp move <username> <slot>")
-		username = message[1]
-		newSlotID = int(message[2])
-		userID = userUtils.getIDSafe(username)
-		if userID is None:
-			raise exceptions.userNotFoundException("No such user")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		success = _match.userChangeSlot(userID, newSlotID)
-		if success:
-			result = "Player {} moved to slot {}".format(username, newSlotID)
-		else:
-			result = "You can't use that slot: it's either already occupied by someone else or locked"
-		return result
-
-	def mpHost():
-		if len(message) < 2:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp host <username>")
-		username = message[1].strip()
-		if not username:
-			raise exceptions.invalidArgumentsException("Please provide a username")
-		userID = userUtils.getIDSafe(username)
-		if userID is None:
-			raise exceptions.userNotFoundException("No such user")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		success = _match.setHost(userID)
-		return "{} is now the host".format(username) if success else "Couldn't give host to {}".format(username)
-
-	def mpClearHost():
-		matchID = getMatchIDFromChannel(chan)
-		glob.matches.matches[matchID].removeHost()
-		return "Host has been removed from this match"
-
-	def mpStart():
-		def _start():
-			matchID = getMatchIDFromChannel(chan)
-			success = glob.matches.matches[matchID].start()
-			if not success:
-				chat.sendMessage(glob.BOT_NAME, chan, "Couldn't start match. Make sure there are enough players and "
-												  "teams are valid. The match has been unlocked.")
-			else:
-				chat.sendMessage(glob.BOT_NAME, chan, "Have fun!")
-
-
-		def _decreaseTimer(t):
-			if t <= 0:
-				_start()
-			else:
-				if t % 10 == 0 or t <= 5:
-					chat.sendMessage(glob.BOT_NAME, chan, "Match starts in {} seconds.".format(t))
-				threading.Timer(1.00, _decreaseTimer, [t - 1]).start()
-
-		if len(message) < 2 or not message[1].isdigit():
-			startTime = 0
-		else:
-			startTime = int(message[1])
-
-		force = False if len(message) < 3 else message[2].lower() == "force"
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-
-		# Force everyone to ready
-		someoneNotReady = False
-		for i, slot in enumerate(_match.slots):
-			if slot.status != slotStatuses.READY and slot.user is not None:
-				someoneNotReady = True
-				if force:
-					_match.toggleSlotReady(i)
-
-		if someoneNotReady and not force:
-			return "Some users aren't ready yet. Use '!mp start force' if you want to start the match, " \
-				   "even with non-ready players."
-
-		if startTime == 0:
-			_start()
-			return "Starting match"
-		else:
-			_match.isStarting = True
-			threading.Timer(1.00, _decreaseTimer, [startTime - 1]).start()
-			return "Match starts in {} seconds. The match has been locked. " \
-				   "Please don't leave the match during the countdown " \
-				   "or you might receive a penalty.".format(startTime)
-
-	def mpInvite():
-		if len(message) < 2:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp invite <username>")
-		username = message[1].strip()
-		if not username:
-			raise exceptions.invalidArgumentsException("Please provide a username")
-		userID = userUtils.getIDSafe(username)
-		if userID is None:
-			raise exceptions.userNotFoundException("No such user")
-		token = glob.tokens.getTokenFromUserID(userID, ignoreIRC=True)
-		if token is None:
-			raise exceptions.invalidUserException("That user is not connected to bancho right now.")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		_match.invite(1, userID)
-		token.enqueue(serverPackets.notification("Please accept the invite you've just received from {} to "
-												 "enter your tourney match.".format(glob.BOT_NAME)))
-		return "An invite to this match has been sent to {}".format(username)
-
-	def mpMap():
-		if len(message) < 2 or not message[1].isdigit() or (len(message) == 3 and not message[2].isdigit()):
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp map <beatmapid> [<gamemode>]")
-		beatmapID = int(message[1])
-		gameMode = int(message[2]) if len(message) == 3 else 0
-		if gameMode < 0 or gameMode > 3:
-			raise exceptions.invalidArgumentsException("Gamemode must be 0, 1, 2 or 3")
-		beatmapData = glob.db.fetch("SELECT * FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [beatmapID])
-		if beatmapData is None:
-			raise exceptions.invalidArgumentsException("The beatmap you've selected couldn't be found in the database."
-													   "If the beatmap id is valid, please load the scoreboard first in "
-													   "order to cache it, then try again.")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		_match.beatmapID = beatmapID
-		_match.beatmapName = beatmapData["song_name"]
-		_match.beatmapMD5 = beatmapData["beatmap_md5"]
-		_match.gameMode = gameMode
-		_match.resetReady()
-		_match.sendUpdates()
-		return "Match map has been updated"
-
-	def mpSet():
-		if len(message) < 2 or not message[1].isdigit() or \
-				(len(message) >= 3 and not message[2].isdigit()) or \
-				(len(message) >= 4 and not message[3].isdigit()):
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp set <teammode> [<scoremode>] [<size>]")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		matchTeamType = int(message[1])
-		matchScoringType = int(message[2]) if len(message) >= 3 else _match.matchScoringType
-		if not 0 <= matchTeamType <= 3:
-			raise exceptions.invalidArgumentsException("Match team type must be between 0 and 3")
-		if not 0 <= matchScoringType <= 3:
-			raise exceptions.invalidArgumentsException("Match scoring type must be between 0 and 3")
-		oldMatchTeamType = _match.matchTeamType
-		_match.matchTeamType = matchTeamType
-		_match.matchScoringType = matchScoringType
-		if len(message) >= 4:
-			_match.forceSize(int(message[3]))
-		if _match.matchTeamType != oldMatchTeamType:
-			_match.initializeTeams()
-		if _match.matchTeamType == matchTeamTypes.TAG_COOP or _match.matchTeamType == matchTeamTypes.TAG_TEAM_VS:
-			_match.matchModMode = matchModModes.NORMAL
-
-		_match.sendUpdates()
-		return "Match settings have been updated!"
-
-	def mpAbort():
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		_match.abort()
-		return "Match aborted!"
-
-	def mpKick():
-		if len(message) < 2:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp kick <username>")
-		username = message[1].strip()
-		if not username:
-			raise exceptions.invalidArgumentsException("Please provide a username")
-		userID = userUtils.getIDSafe(username)
-		if userID is None:
-			raise exceptions.userNotFoundException("No such user")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		slotID = _match.getUserSlotID(userID)
-		if slotID is None:
-			raise exceptions.userNotFoundException("The specified user is not in this match")
-		for i in range(0, 2):
-			_match.toggleSlotLocked(slotID)
-		return "{} has been kicked from the match.".format(username)
-
-	def mpPassword():
-		password = "" if len(message) < 2 or not message[1].strip() else message[1]
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		_match.changePassword(password)
-		return "Match password has been changed!"
-
-	def mpRandomPassword():
-		password = generalUtils.stringMd5(generalUtils.randomString(32))
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		_match.changePassword(password)
-		return "Match password has been changed to a random one"
-
-	def mpMods():
-		if len(message) < 2:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp <mod1> [<mod2>] ...")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		newMods = 0
-		freeMod = False
-		for _mod in message[1:]:
-			if _mod.lower().strip() == "hd":
-				newMods |= mods.HIDDEN
-			elif _mod.lower().strip() == "hr":
-				newMods |= mods.HARDROCK
-			elif _mod.lower().strip() == "dt":
-				newMods |= mods.DOUBLETIME
-			elif _mod.lower().strip() == "fl":
-				newMods |= mods.FLASHLIGHT
-			elif _mod.lower().strip() in "fi sud".split():
-				newMods |= mods.FADEIN
-			elif _mod.lower().strip() in "em ez".split():
-				newMods |= mods.EASY
-			if _mod.lower().strip() == "none":
-				newMods = 0
-
-			if _mod.lower().strip() == "freemod":
-				freeMod = True
-
-		_match.matchModMode = matchModModes.FREE_MOD if freeMod else matchModModes.NORMAL
-		_match.resetReady()
-		if _match.matchModMode == matchModModes.FREE_MOD:
-			_match.resetMods()
-		_match.changeMods(newMods)
-		return "Match mods have been updated!"
-
-	def mpTeam():
-		if len(message) < 3:
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp team <username> <colour>")
-		username = message[1].strip()
-		if not username:
-			raise exceptions.invalidArgumentsException("Please provide a username")
-		colour = message[2].lower().strip()
-		if colour not in ["red", "blue"]:
-			raise exceptions.invalidArgumentsException("Team colour must be red or blue")
-		userID = userUtils.getIDSafe(username)
-		if userID is None:
-			raise exceptions.userNotFoundException("No such user")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		_match.changeTeam(userID, matchTeams.BLUE if colour == "blue" else matchTeams.RED)
-		return "{} is now in {} team".format(username, colour)
-
-	def mpSettings():
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		single = False if len(message) < 2 else message[1].strip().lower() == "single"
-		msg = "PLAYERS IN THIS MATCH "
-		if not single:
-			msg += "(use !mp settings single for a single-line version):"
-			msg += "\n"
-		else:
-			msg += ": "
-		empty = True
-		for slot in _match.slots:
-			if slot.user is None:
-				continue
-			readableStatuses = {
-				slotStatuses.READY: "ready",
-				slotStatuses.NOT_READY: "not ready",
-				slotStatuses.NO_MAP: "no map",
-				slotStatuses.PLAYING: "playing",
-			}
-			if slot.status not in readableStatuses:
-				readableStatus = "???"
-			else:
-				readableStatus = readableStatuses[slot.status]
-			empty = False
-			msg += "* [{team}] <{status}> ~ {username}{mods}{nl}".format(
-				team="red" if slot.team == matchTeams.RED else "blue" if slot.team == matchTeams.BLUE else "!! no team !!",
-				status=readableStatus,
-				username=glob.tokens.tokens[slot.user].username,
-				mods=" (+ {})".format(generalUtils.readableMods(slot.mods)) if slot.mods > 0 else "",
-				nl=" | " if single else "\n"
-			)
-		if empty:
-			msg += "Nobody.\n"
-		msg = msg.rstrip(" | " if single else "\n")
-		return msg
-
-	def mpScoreV():
-		if len(message) < 2 or message[1] not in ("1", "2"):
-			raise exceptions.invalidArgumentsException("Wrong syntax: !mp scorev <1|2>")
-		_match = glob.matches.matches[getMatchIDFromChannel(chan)]
-		_match.matchScoringType = matchScoringTypes.SCORE_V2 if message[1] == "2" else matchScoringTypes.SCORE
-		_match.sendUpdates()
-		return "Match scoring type set to scorev{}".format(message[1])
-
-	def mpHelp():
-		return "Supported subcommands: !mp <{}>".format("|".join(k for k in subcommands.keys()))
-
-	try:
-		subcommands = {
-			"listref": mpListRefer,
-			"addref": mpAddRefer,
-			"rmref": mpRemoveRefer,
-			"make": mpMake,
-			"close": mpClose,
-			"join": mpJoin,
-			"lock": mpLock,
-			"unlock": mpUnlock,
-			"size": mpSize,
-			"move": mpMove,
-			"host": mpHost,
-			"clearhost": mpClearHost,
-			"start": mpStart,
-			"invite": mpInvite,
-			"map": mpMap,
-			"set": mpSet,
-			"abort": mpAbort,
-			"kick": mpKick,
-			"password": mpPassword,
-			"randompassword": mpRandomPassword,
-			"mods": mpMods,
-			"team": mpTeam,
-			"settings": mpSettings,
-            "scorev": mpScoreV,
-			"help": mpHelp
-		}
-		requestedSubcommand = message[0].lower().strip()
-		if requestedSubcommand not in subcommands:
-			raise exceptions.invalidArgumentsException("Invalid subcommand")
-		return subcommands[requestedSubcommand]()
-	except (exceptions.invalidArgumentsException, exceptions.userNotFoundException, exceptions.invalidUserException) as e:
-		return str(e)
-	except exceptions.wrongChannelException:
-		return "This command only works in multiplayer chat channels"
-	except exceptions.matchNotFoundException:
-		return "Match not found"
-	except:
-		raise
+	return MP.handler(fro, chan, message)
 
 def switchServer(fro, chan, message):
 	# Get target user ID
@@ -1303,7 +857,7 @@ def rtx(fro, chan, message):
 		return "{}: user not found".format(target)
 	userToken = glob.tokens.getTokenFromUserID(targetUserID, ignoreIRC=True, _all=False)
 	userToken.enqueue(serverPackets.rtx(message))
-	return ":ok_hand:"
+	return "👌👌👌👌👌 :ok_hand: 👌👌👌👌👌"
 	
 def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 	# Put the gathered values into variables to be used later
@@ -1314,92 +868,105 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 
 	# Get persons userID, privileges, and token
 	userID = userUtils.getID(fro)
-	privileges = userUtils.getPrivileges(userID)
+	userPriv = userUtils.getPrivileges(userID)
 	token = glob.tokens.getTokenFromUserID(userID)
 	name = userUtils.getUsername(userID)
 
 	# Only allow users to request maps in #admin channel or PMs with AC. Heavily reduced spam smh
-	if chan.startswith('#') and chan != '#admin' and not privileges & 8388608:
+	if (userPriv & privileges.ADMIN_MANAGE_BEATMAPS) != privileges.ADMIN_MANAGE_BEATMAPS:
+		# silent ignore.
+		return None
+	if chan not in ('#admin', glob.BOT_NAME):
 		return "Map ranking is not permitted in regular channels, please do so in PMs with AC (or #admin if administrator)."
-
-	# Grab beatmapData from db
-	try:
-		beatmapData = glob.db.fetch("SELECT beatmapset_id, song_name, ranked FROM beatmaps WHERE beatmap_id = {} LIMIT 1".format(mapID))
-	except:
-		return "We could not find that beatmap. Perhaps check you are using the BeatmapID (not BeatmapSetID), and typed it correctly."
-
+	
+	isSet = False
 	if 's' in mapType.lower():
 		mapType = 'set'
+		isSet = True
 	elif 'd' in mapType.lower() or 'm' in mapType.lower():
 		mapType = 'map'
 	else:
 		return "Please specify whether your request is a single difficulty, or a full set (map/set). Example: '!map unrank/rank/love set/map 256123 mania'."
+	
 
-	# User has AdminManageBeatmaps perm
-	if privileges & 256:
-
-		# Figure out which ranked status we're requesting to
-		if 'r' in rankType.lower() and 'u' not in rankType.lower():
-			rankType = 'rank'
-			rankTypeID = 2
-			freezeStatus = 1
-		elif 'l' in rankType.lower():
-			rankType = 'love'
-			rankTypeID = 5
-			freezeStatus = 2
-		elif 'u' in rankType.lower() or 'g' in rankType.lower():
-			rankType = 'unrank'
-			rankTypeID = 0
-			freezeStatus = 0
+	# Grab beatmapData from db
+	beatmapData = glob.db.fetch("SELECT beatmapset_id, song_name, ranked FROM beatmaps WHERE {} = {} LIMIT 1".format('beatmapset_id' if isSet else 'beatmap_id', mapID))
+	if beatmapData is None:
+		if isSet:
+			return "I can't find the beatmap set of it."
 		else:
-			return "Please enter a valid ranked status (rank, love, unrank)."
-		
-		if rankType == "love":
-			status = "loved"
-		elif rankType == "rank":
-			status = "ranked"
-		else:
-			status = "unranked"
-		
-		if beatmapData['ranked'] == rankTypeID:
-			return "This map is already {}".format(status)
+			return "I can't find the beatmap of it, you are not mistaking with set ID right?"
 
-		if mapType == 'set':
-			numDiffs = glob.db.fetch("SELECT COUNT(id) FROM beatmaps WHERE beatmapset_id = {}".format(beatmapData["beatmapset_id"]))
-			glob.db.execute("UPDATE beatmaps SET ranked = {}, ranked_status_freezed = {}, rankedby = {} WHERE beatmapset_id = {} LIMIT {}".format(rankTypeID, freezeStatus, userID, beatmapData["beatmapset_id"], numDiffs["COUNT(id)"]))
-		else:
-			glob.db.execute("UPDATE beatmaps SET ranked = {}, ranked_status_freezed = {}, rankedby = {} WHERE beatmap_id = {} LIMIT 1".format(rankTypeID, freezeStatus, userID, mapID ))
+	# Figure out which ranked status we're requesting to
+	rankTypeBase = rankType.lower()[0]
+	if rankTypeBase in ('r'):
+		rankType = 'rank'
+		status = 'ranked'
+		rankTypeID = 2
+	elif rankTypeBase in ('l'):
+		rankType = 'love'
+		status = 'loved'
+		rankTypeID = 5
+	elif rankTypeBase in ('u', 'g'):
+		rankType = 'unrank'
+		status = 'unranked'
+		rankTypeID = 0
+	else:
+		return "Please enter a valid ranked status (rank, love, unrank)."
+	
+	if beatmapData['ranked'] == rankTypeID:
+		return "This map is already {}!".format(status)
 
-		# Announce / Log to admin panel logs when ranked status is changed
-		log.rap(userID, "has {} beatmap ({}): {} ({})".format(status, mapType, beatmapData["song_name"], mapID), True)
+	if isSet:
+		rankUtils.editSet(mapID, status, userID)
+	else:
+		rankUtils.editMap(mapID, status, userID)
+
+	# Announce / Log to admin panel logs when ranked status is changed
+	log.rap(userID, "has {} beatmap ({}): {} ({})".format(status, mapType, beatmapData["song_name"], mapID), True)
+	
+	if False: # DEPRECACIO
+		# BANCHO SIDE
 		if mapType.lower() == 'set':
 			msg = "{} has {} beatmap set: [https://osu.ppy.sh/s/{} {}]".format(fro, status, beatmapData["beatmapset_id"], beatmapData["song_name"])
 		else:
 			msg = "{} has {} beatmap: [https://osu.ppy.sh/s/{} {}]".format(fro, status, mapID, beatmapData["song_name"])
-
 		chat.sendMessage(glob.BOT_NAME, "#announce", msg)
-		
-        	# send to discord
-		if mapType == "set":
+		# DISCORD SIDE
+		if mapType == "set": # inconsistent
 			dcdesc = "{} (set) has been {} by {}".format(beatmapData["song_name"], status, name)
 		else:
 			dcdesc = "{} has been {} by {}".format(beatmapData["song_name"], status, name)
-
-		webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
-		embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(dcdesc, beatmapData["beatmapset_id"]), color=242424)
-		embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
-		embed.set_author(name='{}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.osu.troke.id/{}'.format(str(userID)))
-		embed.set_footer(text='This map was {} from in-game'.format(status))
-		webhook.add_embed(embed)
-		log.info("[rankedmap] Rank status masuk ke discord bro")
-		webhook.execute()
-
-
-		return msg
+		#
+		if 'ranked-map' in glob.conf.config['discord']:
+			webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
+			embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(dcdesc, beatmapData["beatmapset_id"]), color=242424)
+			embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
+			embed.set_author(name='{}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.osu.troke.id/{}'.format(str(userID)))
+			embed.set_footer(text='This map was {} from in-game'.format(status))
+			webhook.add_embed(embed)
+			log.info("[rankedmap] Rank status masuk ke discord bro")
+			webhook.execute()
+		else:
+			log.info("smh. not set.")
+	else:
+		def banchoCallback(msg):
+			chat.sendMessage(glob.BOT_NAME, chatChannels.ANNOUNCE_CHANNEL, re.sub(r"\!$",f" by [https://osu.troke.id/u/{userID} {name}]!",msg))
+		def discordCallback(msg, idTuple):
+			webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
+			embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(dcdesc, beatmapData["beatmapset_id"]), color=242424)
+			embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
+			embed.set_author(name='{}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.troke.id/{}'.format(str(userID)))
+			embed.set_footer(text='This map was {} from in-game'.format(status))
+			webhook.add_embed(embed)
+			log.info("[rankedmap] Rank status masuk ke discord bro")
+			webhook.execute()
+		rankUtils.announceMap(('s' if isSet else 'b', mapID), rankStatus, banchoCallback, discordCallback)
+	return msg
 
 def postAnnouncement(fro, chan, message): # Post to #announce ingame
 	announcement = ' '.join(message[0:])
-	chat.sendMessage(glob.BOT_NAME, "#announce", announcement)
+	chat.sendMessage(glob.BOT_NAME, chatChannels.ANNOUNCE_CHANNEL, announcement)
 	userID = userUtils.getID(fro)
 	name = userUtils.getUsername(userID)
 
@@ -1461,9 +1028,6 @@ def whitelistUserPPLimit(fro, chan, message):
 
 	userUtils.whitelistUserPPLimit(userID, rx)
 	return "{user} has been whitelisted from autorestrictions on {rx}.".format(user=target, rx='relax' if rx else 'vanilla')
-
-def okegan(from_user, from_chan, msg):
-	return "oke gan"
 
 def bloodcat(fro, chan, message):
 	try:
@@ -1539,36 +1103,33 @@ privileges: privileges needed to execute the command. Optional.
 """
 commands = [
 	{
-		"trigger": "!roll",
+		"trigger": "roll",
 		"callback": roll
 	}, {
-		"trigger": "T3I",
-		"callback": okegan
-	}, {
-		"trigger": "!faq",
+		"trigger": "faq",
 		"syntax": "<name>",
 		"callback": faq
 	}, {
-		"trigger": "!report",
+		"trigger": "report",
 		"callback": report
 	}, {
-		"trigger": "!help",
+		"trigger": "help",
 		"response": "Click (here)[https://osu.troke.id/index.php?p=16&id=4] for full command list"
 	}, {
-		"trigger": "!ppboard",
+		"trigger": "ppboard",
 		"syntax": "<relax/vanilla>",
 		"callback": usePPBoard
 	}, {
-		"trigger": "!scoreboard",
+		"trigger": "scoreboard",
 		"syntax": "<relax/vanilla>",
 		"callback": useScoreBoard
 	}, {
-		"trigger": "!whitelist",
+		"trigger": "whitelist",
 		"privileges": privileges.ADMIN_BAN_USERS,
 		"syntax": "<target> <relax/vanilla>",
 		"callback": whitelistUserPPLimit
 	}, {
-		"trigger": "!announce",
+		"trigger": "announce",
 		"syntax": "<announcement>",
 		"privileges": privileges.ADMIN_SEND_ALERTS,
 		"callback": postAnnouncement
@@ -1578,140 +1139,128 @@ commands = [
 		#"callback": ask
 	#}, {
 	{
-		"trigger": "!maprq",
+		"trigger": "maprq",
 		"privileges": privileges.ADMIN_MANAGE_BEATMAPS,
 		"callback": getBeatmapRequest
 	}, {
-		"trigger": "!map",
+		"trigger": "map",
 		"syntax": "<rank/unrank> <set/map> <ID>",
 		"privileges": privileges.ADMIN_MANAGE_BEATMAPS,
 		"callback": editMap
 	}, {
-		"trigger": "!mm00",
-		"callback": mm00
-	}, {
-		"trigger": "!alert",
+		"trigger": "alert",
 		"syntax": "<message>",
 		"privileges": privileges.ADMIN_SEND_ALERTS,
 		"callback": alert
 	}, {
-		"trigger": "!alertuser",
+		"trigger": "alertuser",
 		"syntax": "<username> <message>",
 		"privileges": privileges.ADMIN_SEND_ALERTS,
 		"callback": alertUser,
 	}, {
-		"trigger": "!moderated",
+		"trigger": "moderated",
 		"privileges": privileges.ADMIN_CHAT_MOD,
 		"callback": moderated
 	}, {
-		"trigger": "!kickall",
+		"trigger": "kickall",
 		"privileges": privileges.ADMIN_MANAGE_SERVERS,
 		"callback": kickAll
 	}, {
-		"trigger": "!kick",
+		"trigger": "kick",
 		"syntax": "<target>",
 		"privileges": privileges.ADMIN_KICK_USERS,
 		"callback": kick
 	}, {
-		"trigger": "!bot reconnect",
+		"trigger": "bot reconnect",
 		"privileges": privileges.ADMIN_MANAGE_SERVERS,
 		"callback": fokabotReconnect
 	}, {
-		"trigger": "!silence",
+		"trigger": "silence",
 		"syntax": "<target> <amount> <unit(s/m/h/d)> <reason>",
 		"privileges": privileges.ADMIN_SILENCE_USERS,
 		"callback": silence
 	}, {
-		"trigger": "!removesilence",
+		"trigger": "removesilence",
 		"syntax": "<target>",
 		"privileges": privileges.ADMIN_SILENCE_USERS,
 		"callback": removeSilence
 	}, {
-		"trigger": "!system restart",
+		"trigger": "system restart",
 		"privileges": privileges.ADMIN_MANAGE_SERVERS,
 		"callback": systemRestart
 	}, {
-		"trigger": "!system shutdown",
+		"trigger": "system shutdown",
 		"privileges": privileges.ADMIN_MANAGE_SERVERS,
 		"callback": systemShutdown
 	}, {
-		"trigger": "!system reload",
+		"trigger": "system reload",
 		"privileges": privileges.ADMIN_MANAGE_SETTINGS,
 		"callback": systemReload
 	}, {
-		"trigger": "!system maintenance",
+		"trigger": "system maintenance",
 		"privileges": privileges.ADMIN_MANAGE_SERVERS,
 		"callback": systemMaintenance
 	}, {
-		"trigger": "!system status",
+		"trigger": "system status",
 		"privileges": privileges.ADMIN_MANAGE_SERVERS,
 		"callback": systemStatus
 	}, {
-		"trigger": "!ban",
+		"trigger": "ban",
 		"syntax": "<target>",
 		"privileges": privileges.ADMIN_BAN_USERS,
 		"callback": ban
 	}, {
-		"trigger": "!unban",
+		"trigger": "unban",
 		"syntax": "<target>",
 		"privileges": privileges.ADMIN_BAN_USERS,
 		"callback": unban
 	}, {
-		"trigger": "!restrict",
+		"trigger": "restrict",
 		"syntax": "<target>",
 		"privileges": privileges.ADMIN_BAN_USERS,
 		"callback": restrict
 	}, {
-		"trigger": "!unrestrict",
+		"trigger": "unrestrict",
 		"syntax": "<target>",
 		"privileges": privileges.ADMIN_BAN_USERS,
 		"callback": unrestrict
 	}, {
-		"trigger": "\x01ACTION is listening to",
-		"callback": tillerinoNp
-	}, {
-		"trigger": "\x01ACTION is playing",
-		"callback": tillerinoNp
-	}, {
-		"trigger": "\x01ACTION is watching",
-		"callback": tillerinoNp
-	}, {
-		"trigger": "!with",
+		"trigger": "with",
 		"callback": tillerinoMods,
 		"syntax": "<mods>"
 	}, {
-		"trigger": "!last",
+		"trigger": "last",
 		"callback": tillerinoLast
 	}, {
-		"trigger": "!ir",
+		"trigger": "ir",
 		"privileges": privileges.ADMIN_MANAGE_SERVERS,
 		"callback": instantRestart
 	}, {
-		"trigger": "!pp",
+		"trigger": "pp",
 		"callback": pp
 	}, {
-		"trigger": "!update",
+		"trigger": "update",
 		"callback": updateBeatmap
 	}, {
-		"trigger": "!mp",
-		"privileges": privileges.USER_TOURNAMENT_STAFF,
+		"trigger": "mp",
+		# "privileges": privileges.USER_TOURNAMENT_STAFF,
 		"syntax": "<subcommand>",
 		"callback": multiplayer
 	}, {
-		"trigger": "!switchserver",
+		"trigger": "switchserver",
 		"privileges": privileges.ADMIN_MANAGE_SERVERS,
 		"syntax": "<username> <server_address>",
 		"callback": switchServer
 	}, {
-		"trigger": "!rtx",
+		"trigger": "rtx",
 		"privileges": privileges.ADMIN_MANAGE_USERS,
 		"syntax": "<username> <message>",
 		"callback": rtx
 	}, {
-		"trigger": "!bloodcat",
+		"trigger": "bloodcat",
 		"callback": bloodcat
 	}, {
-		"trigger": "!beatconnect",
+		"trigger": "beatconnect",
 		"callback": beatconnect
 	}
 	#

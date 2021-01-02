@@ -1,5 +1,6 @@
 from common.log import logUtils as log
 from common.ripple import userUtils
+from constants import chatChannels
 from constants import exceptions
 from constants import messageTemplates
 from constants import serverPackets
@@ -98,12 +99,12 @@ def partChannel(userID = 0, channel = "", token = None, toIRC = True, kick = Fal
 				s = userID
 			else:
 				s = token.spectatingUserID
-			channel = "#spect_{}".format(s)
+			channel = "{}_{}".format(chatChannel.SPECTATOR_PREFIX, s)
 		elif channel == "#multiplayer":
-			channel = "#multi_{}".format(token.matchID)
-		elif channel.startswith("#spect_"):
+			channel = "{}_{}".format(chatChannel.MULTIPLAYER_PREFIX, token.matchID)
+		elif channel.startswith(f"{chatChannel.SPECTATOR_PREFIX}_"):
 			channelClient = "#spectator"
-		elif channel.startswith("#multi_"):
+		elif channel.startswith(f"{chatChannel.MULTIPLAYER_PREFIX}_"):
 			channelClient = "#multiplayer"
 
 		# Make sure the channel exists
@@ -190,6 +191,16 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		if message.startswith("!report"):
 			to = glob.BOT_NAME
 
+		# Bancho style.
+		isSPub = to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_") or to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_")
+		forBot = to.lower() == glob.BOT_NAME.lower()
+		if message[0] == '!':
+			redirectBot = not (token.admin or isSPub)
+			if isChannel or forBot:
+				message = message[1:]
+			if redirectBot:
+				to = glob.BOT_NAME
+		
 		# Determine internal name if needed
 		# (toclient is used clientwise for #multiplayer and #spectator channels)
 		toClient = to
@@ -198,12 +209,12 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 				s = token.userID
 			else:
 				s = token.spectatingUserID
-			to = "#spect_{}".format(s)
+			to = "{}_{}".format(chatChannels.SPECTATOR_PREFIX, s)
 		elif to == "#multiplayer":
-			to = "#multi_{}".format(token.matchID)
-		elif to.startswith("#spect_"):
+			to = "{}_{}".format(chatChannels.MULTIPLAYER_PREFIX, token.matchID)
+		elif to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_"):
 			toClient = "#spectator"
-		elif to.startswith("#multi_"):
+		elif to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_"):
 			toClient = "#multiplayer"
 
 		# Make sure the message is valid
@@ -281,21 +292,21 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 				if line == messageSplitInLines[:1] and line == "":
 					continue
 				glob.ircServer.banchoMessage(fro, to, line)
-
+		
 		# Spam protection (ignore the bot)
-		if token.userID > 1:
+		if token.userID > 1 or token.admin:
 			token.spamProtection()
-
+		
+		# File and discord logs (public chat only)
+		if to.startswith("#") and not (message.startswith("\x01ACTION is playing") and to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_")):
+			log.chat("{fro} @ {to}: {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
+			glob.schiavo.sendChatlog("**{fro} @ {to}:** {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
+		
 		# Some bot message
-		if isChannel or to.lower() == glob.BOT_NAME.lower():
+		if isChannel or forBot:
 			fokaMessage = fokabot.fokabotResponse(token.username, to, message)
 			if fokaMessage:
 				sendMessage(glob.BOT_NAME, to if isChannel else fro, fokaMessage)
-
-		# File and discord logs (public chat only)
-		if to.startswith("#") and not (message.startswith("\x01ACTION is playing") and to.startswith("#spect_")):
-			log.chat("{fro} @ {to}: {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
-			glob.schiavo.sendChatlog("**{fro} @ {to}:** {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
 		return 0
 	except exceptions.userSilencedException:
 		token.enqueue(serverPackets.silenceEndTime(token.getSilenceSecondsLeft()))

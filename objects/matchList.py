@@ -14,7 +14,7 @@ class matchList:
 		self.matches = {}
 		self.lastID = 1
 
-	def createMatch(self, matchName, matchPassword, beatmapID, beatmapName, beatmapMD5, gameMode, hostUserID, isTourney=False):
+	def createMatch(self, matchName, matchPassword, beatmapID, beatmapName, beatmapMD5, gameMode, hostUserID, creatorUserID, isTourney=False):
 		"""
 		Add a new match to matches list
 
@@ -30,7 +30,7 @@ class matchList:
 		# Add a new match to matches list and create its stream
 		matchID = self.lastID
 		self.lastID+=1
-		self.matches[matchID] = match.match(matchID, matchName, matchPassword, beatmapID, beatmapName, beatmapMD5, gameMode, hostUserID, isTourney)
+		self.matches[matchID] = match.match(matchID, matchName, matchPassword, beatmapID, beatmapName, beatmapMD5, gameMode, hostUserID, creatorUserID, isTourney)
 		return matchID
 
 

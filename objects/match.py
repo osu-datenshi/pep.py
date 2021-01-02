@@ -32,7 +32,7 @@ class slot:
 		self.passed = True
 
 class match:
-	def __init__(self, matchID, matchName, matchPassword, beatmapID, beatmapName, beatmapMD5, gameMode, hostUserID, isTourney=False):
+	def __init__(self, matchID, matchName, matchPassword, beatmapID, beatmapName, beatmapMD5, gameMode, hostUserID, creatorUserID, isTourney=False):
 		"""
 		Create a new match object
 
@@ -55,6 +55,7 @@ class match:
 		self.beatmapID = beatmapID
 		self.beatmapName = beatmapName
 		self.beatmapMD5 = beatmapMD5
+		self.ownerUserID = creatorUserID
 		self.hostUserID = hostUserID
 		self.gameMode = gameMode
 		self.matchScoringType = matchScoringTypes.SCORE	# default values
@@ -83,21 +84,21 @@ class match:
 		glob.channels.addHiddenChannel("#multi_{}".format(self.matchID))
 		log.info("MPROOM{}: {} match created!".format(self.matchID, "Tourney" if self.isTourney else "Normal"))
 
-		# Create referrs array that couls use !mp command from the bot.
-		self.refers = [hostUserID]
+		# Create referees array that couls use !mp command from the bot.
+		self.referees = [hostUserID]
 
 		# Clantag
 		self.getClan = getClan
+	
+	def addReferee(self, referUserId):
+		self.referees.append(referUserId)
 
-	def addRefer(self, referUserId):
-		self.refers.append(referUserId)
-
-	def removeRefer(self, referUserId):
+	def removeReferee(self, referUserId):
 		if self.userRefersToMatch(referUserId):
-			self.refers.remove(referUserId)
+			self.referees.remove(referUserId)
 
-	def userRefersToMatch(self, referUserId):
-		return referUserId in self.refers
+	def userRefereesToMatch(self, refereeUserId):
+		return refereeUserId in self.referees
 
 	def getMatchData(self, censored = False):
 		"""

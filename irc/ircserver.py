@@ -408,6 +408,7 @@ class Client:
 				self.messageChannel(channel, "{} JOIN".format(self.IRCUsername), channel, True)
 				if isChatMod:
 					self.messageChannel(channel, "{} MODE {} {}".format(glob.BOT_NAME, channel, '+o'), self.IRCUsername, True)
+				self.message(':{} MODE {} {}'.format(glob.BOT_NAME, glob.BOT_NAME, 'o'))
 
 				# Send channel description (topic)
 				description = glob.channels.channels[channel].description
@@ -415,7 +416,7 @@ class Client:
 					self.replyCode(331, "No topic is set", channel=channel)
 				else:
 					self.replyCode(332, description, channel=channel)
-				self.message(":{} MODE {} {}".format(glob.BOT_NAME, '+nt', channel))
+				# self.message(":{} MODE {} {}".format(glob.BOT_NAME, '+nt', channel))
 
 				# Build connected users list
 				if "chat/{}".format(channel) not in glob.streams.streams:
