@@ -53,17 +53,24 @@ def fokabotResponse(fro, chan, message):
 	
 	for reaction in yohaneReactions.triggers:
 		callIt = False
-		if reaction['match'] == 'exact':
+		match  = reaction.get('match','starts')
+		if match == 'exact':
 			callIt = reaction['trigger'] == msg
-		elif reaction['match'] == 'partial':
-			callIt = reaction['trigger'] in msg
-		elif reaction['match'] == 'word':
-			callIt = reaction['trigger'] in msg.split()
-		elif reaction['match'] in ('regex', 'regexp'):
+		elif match == 'partial':
+			callIt = reaction['trigger'].lower() in msg.lower()
+		elif match == 'word':
+			callIt = reaction['trigger'].lower() in msg.lower().split()
+		elif match == 'starts':
+			callIt = msg.lower().startswith(reaction['trigger'].lower() + ' ')
+		elif match in ('regex', 'regexp'):
 			callIt = re.compile(reaction['trigger']).match(msg)
 		if callIt:
 			return reaction['callback'](fro, chan, message)
-	
+
+	# No commands triggered
+	return False
+
+def fokabotCommands(fro, chan, message):
 	userID = userUtils.getID(fro)
 	userPr = userUtils.getPrivileges(userID)
 	for command in yohaneCommands.commands:
@@ -87,6 +94,5 @@ def fokabotResponse(fro, chan, message):
 				return command["response"]
 			else:
 				return command["callback"](fro, chan, message[1:])
-
-	# No commands triggered
-	return False
+	
+	return None

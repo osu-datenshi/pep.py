@@ -194,12 +194,14 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		# Bancho style.
 		isSPub = to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_") or to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_")
 		forBot = to.lower() == glob.BOT_NAME.lower()
-		if message[0] == '!':
+		botCommand = message[0] == '!'
+		if botCommand:
 			redirectBot = not (token.admin or isSPub)
-			if isChannel or forBot:
+			if to[0] == '#' or forBot:
 				message = message[1:]
 			if redirectBot:
 				to = glob.BOT_NAME
+			# log.info(f'Redirect {redirectBot} ({token.admin}/{isSPub}) -> {to}({forBot}) -> {message}')
 		
 		# Determine internal name if needed
 		# (toclient is used clientwise for #multiplayer and #spectator channels)
@@ -304,7 +306,10 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		
 		# Some bot message
 		if isChannel or forBot:
-			fokaMessage = fokabot.fokabotResponse(token.username, to, message)
+			if botCommand:
+				fokaMessage = fokabot.fokabotCommands(token.username, to, message)
+			else:
+				fokaMessage = fokabot.fokabotResponse(token.username, to, message)
 			if fokaMessage:
 				sendMessage(glob.BOT_NAME, to if isChannel else fro, fokaMessage)
 		return 0
