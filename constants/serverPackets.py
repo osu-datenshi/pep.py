@@ -102,9 +102,9 @@ def userPanel(userID, force = False):
 		]
 		result = glob.db.fetch(" ".join(stmt), [userID])
 		if result is None:
-			return result['timezone'], result['country_id']
-		else:
 			return userToken.timeOffset, userToken.country
+		else:
+			return result['timezone'], result['country_id']
 		pass
 	
 	# Custom Timezone
