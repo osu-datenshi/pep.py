@@ -457,7 +457,7 @@ class match:
 		if self.vinseID is None:
 			self.vinseID = (int(time.time()) // (60 * 15)) << 32 | self.matchID
 			chat.sendMessage(glob.BOT_NAME, chanName, "Match history available [{} here]".format(
-				"https://multi.datenshi.xyz/match/{}".format(self.vinseID)
+				"https://multi.osu.troke.id/match/{}".format(self.vinseID)
 			))
 		#ganti ke if not kalau error
 		if not self.bloodcatAlert:

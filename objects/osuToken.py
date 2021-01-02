@@ -5,8 +5,7 @@ import uuid
 from common.constants import gameModes, actions
 from common.log import logUtils as log
 from common.ripple import userUtils
-from constants import exceptions
-from constants import serverPackets
+from constants import exceptions, serverPackets, chatChannels
 from events import logoutEvent
 from helpers import chatHelper as chat
 from objects import glob
@@ -66,14 +65,20 @@ class token:
 		self.spamRate = 0
 
 		# Stats cache
-		if userID == 2:
-			self.actionID = actions.WATCHING
-		else:
-			self.actionID = actions.IDLE
-		if userID == 2:
-			self.actionText = "Nekopoi"
-		else:
-			self.actionText = ""
+		def check_hax_initial():
+			stmt = [
+			  "SELECT initial_status_type as aid, initial_status_text as atxt",
+			  "FROM bancho_status_hax",
+			  "WHERE user_id = %s AND NOT",
+			  "(initial_status_type IS NULL OR initial_status_text IS NULL OR length(initial_status_text) < 1)"
+			]
+			result = glob.db.fetch(" ".join(stmt), [userID])
+			if result is None:
+				self.actionID, self.actionText = actions.IDLE, ""
+			else:
+				self.actionID, self.actionText = result['aid'], result['atxt']
+			pass
+		check_hax_initial()
 		self.actionMd5 = ""
 		self.actionMods = 0
 		self.gameMode = gameModes.STD
@@ -221,11 +226,11 @@ class token:
 			host.enqueue(serverPackets.addSpectator(self.userID))
 
 			# Create and join #spectator (#spect_userid) channel
-			glob.channels.addTempChannel("#spect_{}".format(host.userID))
-			chat.joinChannel(token=self, channel="#spect_{}".format(host.userID), force=True)
+			glob.channels.addTempChannel("{}_{}".format(chatChannels.SPECTATOR_PREFIX, host.userID))
+			chat.joinChannel(token=self, channel="{}_{}".format(chatChannels.SPECTATOR_PREFIX, host.userID), force=True)
 			if len(host.spectators) == 1:
 				# First spectator, send #spectator join to host too
-				chat.joinChannel(token=host, channel="#spect_{}".format(host.userID), force=True)
+				chat.joinChannel(token=host, channel="{}_{}".format(chatChannels.SPECTATOR_PREFIX,host.userID), force=True)
 
 			# Send fellow spectator join to all clients
 			glob.streams.broadcast(streamName, serverPackets.fellowSpectatorJoined(self.userID))
@@ -275,14 +280,14 @@ class token:
 				# If nobody is spectating the host anymore, close #spectator channel
 				# and remove host from spect stream too
 				if len(hostToken.spectators) == 0:
-					chat.partChannel(token=hostToken, channel="#spect_{}".format(hostToken.userID), kick=True, force=True)
+					chat.partChannel(token=hostToken, channel="{}_{}".format(chatChannels.SPECTATOR_PREFIX, hostToken.userID), kick=True, force=True)
 					hostToken.leaveStream(streamName)
 
 				# Console output
 				log.info("{} is no longer spectating {}. Current spectators: {}".format(self.username, self.spectatingUserID, hostToken.spectators))
 
 			# Part #spectator channel
-			chat.partChannel(token=self, channel="#spect_{}".format(self.spectatingUserID), kick=True, force=True)
+			chat.partChannel(token=self, channel="{}_{}".format(chatChannels.SPECTATOR_PREFIX, self.spectatingUserID), kick=True, force=True)
 
 			# Set our spectating user to 0
 			self.spectating = None
@@ -328,7 +333,7 @@ class token:
 		# Set matchID, join stream, channel and send packet
 		self.matchID = matchID
 		self.joinStream(match.streamName)
-		chat.joinChannel(token=self, channel="#multi_{}".format(self.matchID), force=True)
+		chat.joinChannel(token=self, channel="{}_{}".format(chatChannels.MULTIPLAYER_PREFIX, self.matchID), force=True)
 		self.enqueue(serverPackets.matchJoinSuccess(matchID))
 
 		if match.isTourney:
@@ -349,7 +354,7 @@ class token:
 			return
 
 		# Part #multiplayer channel and streams (/ and /playing)
-		chat.partChannel(token=self, channel="#multi_{}".format(self.matchID), kick=True, force=True)
+		chat.partChannel(token=self, channel="{}_{}".format(chatChannels.MULTIPLAYER_PREFIX, self.matchID), kick=True, force=True)
 		self.leaveStream("multi/{}".format(self.matchID))
 		self.leaveStream("multi/{}/playing".format(self.matchID))	# optional
 
@@ -399,6 +404,9 @@ class token:
 		:param author: userID of who has silenced the user. Default: 999 (Your Bot Name lol)
 		:return:
 		"""
+		if self.admin:
+			return
+		
 		if seconds is None:
 			# Get silence expire from db if needed
 			seconds = max(0, userUtils.getSilenceEnd(self.userID) - int(time.time()))
@@ -436,6 +444,8 @@ class token:
 
 		:return: True if this user is silenced, otherwise False
 		"""
+		if self.admin:
+			return False
 		return self.silenceEndTime-int(time.time()) > 0
 
 	def getSilenceSecondsLeft(self):
@@ -445,6 +455,8 @@ class token:
 
 		:return: silence seconds left (or 0)
 		"""
+		if self.admin:
+			return 0
 		return max(0, self.silenceEndTime-int(time.time()))
 
 	def updateCachedStats(self):
@@ -507,7 +519,7 @@ class token:
 		:return:
 		"""
 		self.restricted = True
-		chat.sendMessage(glob.BOT_NAME, self.username, "Your account is currently in restricted mode. Please visit (Datenshi)[https://datenshi.xyz] website or (Discord)[https://link.troke.id/datenshi] for more information.")
+		chat.sendMessage(glob.BOT_NAME, self.username, "Your account is currently in restricted mode. Please visit (Datenshi)[https://osu.troke.id] website or (Discord)[https://link.troke.id/datenshi] for more information.")
 
 	def resetRestricted(self):
 		"""

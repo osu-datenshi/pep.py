@@ -72,14 +72,14 @@ def instantRestart(fro, chan, message):
 def faq(fro, chan, message):
 	# TODO: Unhardcode this
 	messages = {
-		"rules": "Please make sure to check (Datenshi rules)[https://datenshi.xyz/doc/rules].",
+		"rules": "Please make sure to check (Datenshi rules)[https://osu.troke.id/doc/rules].",
 		"swearing": "Please don't abuse swearing",
 		"spam": "Please don't spam",
 		"offend": "Please don't offend other players",
 		"discord": "(Join Datenshi Discord!)[https://link.troke.id/datenshi]",
 		"ping": "NGIK NGOK NGEK PONG",
 		"bruh": "BRUH",
-		"changelog": "Check the (changelog)[https://datenshi.xyz/changelog] !",
+		"changelog": "Check the (changelog)[https://osu.troke.id/changelog] !",
 		"english": "Please keep this channel in english.",
 		"topic": "Can you please drop the topic and talk about something else?",
 		"lines": "Please try to keep your sentences on a single line to avoid getting silenced.",
@@ -723,7 +723,7 @@ def getBeatmapRequest(fro, chan, message): # Grab a random beatmap request. TODO
 		username = userUtils.getUsername(request['userid'])
 		mapData = glob.db.fetch("SELECT song_name, ranked FROM beatmaps WHERE beatmap_id = {} ORDER BY difficulty_std DESC LIMIT 1;".format(request['bid']))
 		glob.db.execute("DELETE FROM rank_requests WHERE id = {};".format(request['id']))
-		return "[https://datenshi.xyz/u/{userID} {username}] nominated beatmap: [https://osu.ppy.sh/b/{beatmapID} {songName}] for status change. {AinuBeatmapLink}The request has been deleted, so please decide it's status.".format(userID=request['userid'], username=username, beatmapID=request['bid'], songName=mapData['song_name'], AinuBeatmapLink='[https://datenshi.xyz/b/{} Datenshi beatmap Link]. '.format(request['bid']))
+		return "[https://osu.troke.id/u/{userID} {username}] nominated beatmap: [https://osu.ppy.sh/b/{beatmapID} {songName}] for status change. {AinuBeatmapLink}The request has been deleted, so please decide it's status.".format(userID=request['userid'], username=username, beatmapID=request['bid'], songName=mapData['song_name'], AinuBeatmapLink='[https://osu.troke.id/b/{} Datenshi beatmap Link]. '.format(request['bid']))
 	else:
 		return "All nominations have been checked. Thank you for your hard work! :)"
 	
@@ -1151,9 +1151,9 @@ def multiplayer(fro, chan, message):
 				newMods |= mods.DOUBLETIME
 			elif _mod.lower().strip() == "fl":
 				newMods |= mods.FLASHLIGHT
-			elif _mod.lower().strip() == "fi":
+			elif _mod.lower().strip() in "fi sud".split():
 				newMods |= mods.FADEIN
-			elif _mod.lower().strip() == "ez":
+			elif _mod.lower().strip() in "em ez".split():
 				newMods |= mods.EASY
 			if _mod.lower().strip() == "none":
 				newMods = 0
@@ -1388,7 +1388,7 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 		webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
 		embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(dcdesc, beatmapData["beatmapset_id"]), color=242424)
 		embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
-		embed.set_author(name='{}'.format(name), url='https://datenshi.xyz/u/{}'.format(str(userID)), icon_url='https://a.datenshi.xyz/{}'.format(str(userID)))
+		embed.set_author(name='{}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.osu.troke.id/{}'.format(str(userID)))
 		embed.set_footer(text='This map was {} from in-game'.format(status))
 		webhook.add_embed(embed)
 		log.info("[rankedmap] Rank status masuk ke discord bro")
@@ -1406,7 +1406,7 @@ def postAnnouncement(fro, chan, message): # Post to #announce ingame
 	# send to discord
 	webhook = DiscordWebhook(url=glob.conf.config["discord"]["announcement"], content='@everyone')
 	embed = DiscordEmbed(description='{}'.format(announcement), color=242424)
-	embed.set_author(name='Staff : {}'.format(name), url='https://datenshi.xyz/u/{}'.format(str(userID)), icon_url='https://a.datenshi.xyz/{}'.format(str(userID)))
+	embed.set_author(name='Staff : {}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.osu.troke.id/{}'.format(str(userID)))
 	embed.set_footer(text='This announcement was posted from in-game')
 	webhook.add_embed(embed)
 	log.info("[ANNOUNCE] Announce masuk ke discord bro")
@@ -1553,7 +1553,7 @@ commands = [
 		"callback": report
 	}, {
 		"trigger": "!help",
-		"response": "Click (here)[https://datenshi.xyz/index.php?p=16&id=4] for full command list"
+		"response": "Click (here)[https://osu.troke.id/index.php?p=16&id=4] for full command list"
 	}, {
 		"trigger": "!ppboard",
 		"syntax": "<relax/vanilla>",

@@ -93,19 +93,24 @@ def userPanel(userID, force = False):
 	# Get user data
 	username = userToken.username
 	# userID: (TZ offset, Country ID)
-	custom_userdata = {
-		3: (9, 111)
-	}
+	def check_country_data():
+		stmt = [
+		  "SELECT timezone, country_id",
+		  "FROM bancho_status_hax",
+		  "WHERE user_id = %s AND NOT",
+		  "(timezone IS NULL OR country_id IS NULL)"
+		]
+		result = glob.db.fetch(" ".join(stmt), [userID])
+		if result is None:
+			return result['timezone'], result['country_id']
+		else:
+			return userToken.timeOffset, userToken.country
+		pass
+	
 	# Custom Timezone
 	# Custom Countries for Users
 	# 111 = Japan
-	if userID in custom_userdata:
-		hax_data = custom_userdata[userID]
-		timezone = 24 + hax_data[0]
-		country  = hax_data[1]
-	else:
-		timezone = 24+userToken.timeOffset
-		country = userToken.country
+	timezone, country = check_country_data()
 	gameRank = userToken.gameRank
 	latitude = userToken.getLatitude()
 	longitude = userToken.getLongitude()
@@ -132,7 +137,7 @@ def userPanel(userID, force = False):
 	[
 		[userID, dataTypes.SINT32],
 		[username, dataTypes.STRING],
-		[timezone, dataTypes.BYTE],
+		[24 + timezone, dataTypes.BYTE],
 		[country, dataTypes.BYTE],
 		[userRank, dataTypes.BYTE],
 		[longitude, dataTypes.FFLOAT],
