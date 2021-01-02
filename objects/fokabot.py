@@ -4,6 +4,7 @@ import re
 from common import generalUtils
 from common.constants import actions
 from common.ripple import userUtils
+from constants import chatChannels
 from constants import yohaneCommands, yohaneReactions
 from constants import serverPackets
 from objects import glob
@@ -63,24 +64,20 @@ def fokabotResponse(fro, chan, message):
 		if callIt:
 			return reaction['callback'](fro, chan, message)
 	
+	userID = userUtils.getID(fro)
+	userPr = userUtils.getPrivileges(userID)
+	for command in yohaneCommands.commands:
+		
 	for i in yohaneCommands.commands:
 		# Loop though all commands
-		if re.compile("^{}( (.+)?)?$".format(i["trigger"])).match(message.strip()):
+		if re.compile("^{}( (.+)?)?$".format(i["trigger"])).match(msg):
 			# message has triggered a command
 
 			# Make sure the user has right permissions
 			_userId = userUtils.getID(fro)
 			if i["privileges"] is not None:
-				if userUtils.getPrivileges(_userId) & i["privileges"] == 0:
-					if i["trigger"] == "!mp":
-						try:
-							refers = glob.matches.matches[fokabotCommands.getMatchIDFromChannel(chan)].refers
-							if not _userId in refers:
-								return False
-						except:
-							return False
-					else:
-						return False
+				if userUtils.getPrivileges(_userId) & i["privileges"] != i['privileges']:
+					return False
 
 			# Check argument number
 			message = message.split(" ")
