@@ -71,6 +71,7 @@ def fokabotResponse(fro, chan, message):
 	return False
 
 def fokabotCommands(fro, chan, message):
+	msg    = message.strip()
 	userID = userUtils.getID(fro)
 	userPr = userUtils.getPrivileges(userID)
 	for command in yohaneCommands.commands:
@@ -79,9 +80,8 @@ def fokabotCommands(fro, chan, message):
 			# message has triggered a command
 
 			# Make sure the user has right permissions
-			_userId = userUtils.getID(fro)
 			if command["privileges"] is not None:
-				if userUtils.getPrivileges(_userId) & command["privileges"] != command['privileges']:
+				if userPr & command["privileges"] != command['privileges']:
 					return False
 
 			# Check argument number
