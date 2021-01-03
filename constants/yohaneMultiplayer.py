@@ -523,7 +523,7 @@ def _wrapper_():
     def help(sender, channel, message):
         userID = userUtils.getID(sender)
         for command, command_data in commands.items():
-            chat.sendMessage(glob.BOT_NAME, sender, f"!mp {command} {command_data.syntax} {('(requires %s or higher)'.format(command_data.perm) if command_data.perm != 'basic' else '') if command_data.mpOnly else '*can be used outside mp room*'}".strip())
+            chat.sendMessage(glob.BOT_NAME, sender, f"!mp {command} {command_data.syntax} {('(requires %s or higher)' % (command_data.perm,) if command_data.perm != 'basic' else '') if command_data.mpOnly else '*can be used outside mp room*'}".strip())
         chat.sendMessage(glob.BOT_NAME, sender, "This command still underwent heavy rewriting, those ugly terms and such will go soon(TM).")
         chat.sendMessage(glob.BOT_NAME, sender, "Let (us) me know about the bancho mimicking that I need to do, I'll do my best!")
         gloryID = 3 # oi.
