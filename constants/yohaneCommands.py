@@ -921,44 +921,19 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 	# Announce / Log to admin panel logs when ranked status is changed
 	log.rap(userID, "has {} beatmap ({}): {} ({})".format(status, mapType, beatmapData["song_name"], mapID), True)
 	
-	if False: # DEPRECACIO
-		# BANCHO SIDE
-		if mapType.lower() == 'set':
-			msg = "{} has {} beatmap set: [https://osu.ppy.sh/s/{} {}]".format(fro, status, beatmapData["beatmapset_id"], beatmapData["song_name"])
-		else:
-			msg = "{} has {} beatmap: [https://osu.ppy.sh/s/{} {}]".format(fro, status, mapID, beatmapData["song_name"])
-		chat.sendMessage(glob.BOT_NAME, "#announce", msg)
-		# DISCORD SIDE
-		if mapType == "set": # inconsistent
-			dcdesc = "{} (set) has been {} by {}".format(beatmapData["song_name"], status, name)
-		else:
-			dcdesc = "{} has been {} by {}".format(beatmapData["song_name"], status, name)
-		#
-		if 'ranked-map' in glob.conf.config['discord']:
-			webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
-			embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(dcdesc, beatmapData["beatmapset_id"]), color=242424)
-			embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
-			embed.set_author(name='{}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.osu.troke.id/{}'.format(str(userID)))
-			embed.set_footer(text='This map was {} from in-game'.format(status))
-			webhook.add_embed(embed)
-			log.info("[rankedmap] Rank status masuk ke discord bro")
-			webhook.execute()
-		else:
-			log.info("smh. not set.")
-	else:
-		def banchoCallback(msg):
-			chat.sendMessage(glob.BOT_NAME, chatChannels.ANNOUNCE_CHANNEL, re.sub(r"\!$",f" by [https://osu.troke.id/u/{userID} {name}]!",msg))
-		def discordCallback(msg, idTuple):
-			webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
-			embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(dcdesc, beatmapData["beatmapset_id"]), color=242424)
-			embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
-			embed.set_author(name='{}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.troke.id/{}'.format(str(userID)))
-			embed.set_footer(text='This map was {} from in-game'.format(status))
-			webhook.add_embed(embed)
-			log.info("[rankedmap] Rank status masuk ke discord bro")
-			webhook.execute()
-		rankUtils.announceMap(('s' if isSet else 'b', mapID), rankStatus, banchoCallback, discordCallback)
-	return msg
+	def banchoCallback(msg):
+		chat.sendMessage(glob.BOT_NAME, chatChannels.ANNOUNCE_CHANNEL, re.sub(r"\!$",f" by [https://osu.troke.id/u/{userID} {name}]!",msg))
+	def discordCallback(msg, idTuple):
+		webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
+		embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(msg, beatmapData["beatmapset_id"]), color=242424)
+		embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
+		embed.set_author(name='{}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.troke.id/{}'.format(str(userID)))
+		embed.set_footer(text='This map was {} from in-game'.format(status))
+		webhook.add_embed(embed)
+		log.info("[rankedmap] Rank status masuk ke discord bro")
+		webhook.execute()
+	rankUtils.announceMap(('s' if isSet else 'b', mapID), status, banchoCallback, discordCallback)
+	return 'done!'
 
 def postAnnouncement(fro, chan, message): # Post to #announce ingame
 	announcement = ' '.join(message[0:])

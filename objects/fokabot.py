@@ -85,7 +85,7 @@ def fokabotCommands(fro, chan, message):
 					return False
 
 			# Check argument number
-			message = message.split(" ")
+			message = message.strip().split(" ")
 			if command["syntax"] != "" and len(message) <= len(command["syntax"].split(" ")):
 				return "Wrong syntax: {} {}".format(command["trigger"], command["syntax"])
 
