@@ -1,6 +1,7 @@
 from collections import namedtuple
 import random
 import threading
+import re
 
 import requests
 import time
@@ -35,6 +36,27 @@ def _wrapper_():
         return yohaneCommands.getMatchIDFromChannel(channel)
     def getCurrentMatch(channel):
         return glob.matches.matches[getCurrentMatchID(channel)]
+    def lookupUserID(user):
+        iter = []
+        iter.append(userUtils.getID(user))
+        iter.append(userUtils.getIDSafe(user))
+        iter.append(userUtils.getIDSafe(user.lower()))
+        iter.append(userUtils.getIDSafe(chat.fixUsernameForIRC(user).lower()))
+        for result in iter:
+            if result:
+                return result
+    def lookupUser(userStr):
+        match = re.match(r'^#([1-9][0-9]*)$', userStr)
+        if match:
+            log.info(f"Special case {match.group(1)}")
+            userID = int(match.group(1))
+        else:
+            userID = lookupUserID(userStr)
+        if userID is None:
+            raise exceptions.userNotFoundException('No such user.')
+        if userID < 2:
+            raise exceptions.invalidArgumentsException("\x01ACTION gaplok")
+        return userID
     
     def checkPerms(sender, channel, message):
         userID  = userUtils.getID(sender)
@@ -52,9 +74,7 @@ def _wrapper_():
         username = message[0].strip()
         if not username:
             raise exceptions.invalidArgumentsException("Please provide a username")
-        userID = userUtils.getIDSafe(username)
-        if userID is None:
-            raise exceptions.userNotFoundException("No such user")
+        userID = lookupUser(username)
         _match.addRefer(userID)
         return "Added {} to referees".format(username)
 
@@ -65,9 +85,7 @@ def _wrapper_():
         username = message[0].strip()
         if not username:
             raise exceptions.invalidArgumentsException("Please provide a username")
-        userID = userUtils.getIDSafe(username)
-        if userID is None:
-            raise exceptions.userNotFoundException("No such user")
+        userID = lookupUser(username)
         _match.removeRefer(userID)
         return "Removed {} from referee".format(username)
 
@@ -121,15 +139,14 @@ def _wrapper_():
         return "Match size changed to {}".format(matchSize)
 
     def move(sender, channel, message):
-        if len(message) < 2 or not message[1].isdigit() or int(message[1]) < 0 or int(message[1]) > 16:
+        log.info(message[0] + ' to ' + message[1])
+        if len(message) < 2 or not message[1].isdigit() or int(message[1]) not in range(1,17):
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp move <username> <slot>")
-        username = message[0]
+        username = message[0].strip()
         newSlotID = int(message[1])
-        userID = userUtils.getIDSafe(username)
-        if userID is None:
-            raise exceptions.userNotFoundException("No such user")
+        userID = lookupUser(username)
         _match = getCurrentMatch(channel)
-        success = _match.userChangeSlot(userID, newSlotID)
+        success = _match.userChangeSlot(userID, newSlotID - 1)
         if success:
             result = "Player {} moved to slot {}".format(username, newSlotID)
         else:
@@ -142,9 +159,7 @@ def _wrapper_():
         username = message[0].strip()
         if not username:
             raise exceptions.invalidArgumentsException("Please provide a username")
-        userID = userUtils.getIDSafe(username)
-        if userID is None:
-            raise exceptions.userNotFoundException("No such user")
+        userID = lookupUser(username)
         _match = getCurrentMatch(channel)
         success = _match.setHost(userID)
         return "{} is now the host".format(username) if success else "Couldn't give host to {}".format(username)
@@ -302,9 +317,7 @@ def _wrapper_():
         username = message[0].strip()
         if not username:
             raise exceptions.invalidArgumentsException("Please provide a username")
-        userID = userUtils.getIDSafe(username)
-        if userID is None:
-            raise exceptions.userNotFoundException("No such user")
+        userID = lookupUser(username)
         token = glob.tokens.getTokenFromUserID(userID, ignoreIRC=True)
         if token is None:
             raise exceptions.invalidUserException("That user is not connected to bancho right now.")
@@ -319,7 +332,7 @@ def _wrapper_():
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp map <beatmapid> [<gamemode>]")
         beatmapID = int(message[0])
         gameMode = int(message[1]) if len(message) == 2 else 0
-        if gameMode < 0 or gameMode > 3:
+        if gameMode not in (0,1,2,3):
             raise exceptions.invalidArgumentsException("Gamemode must be 0, 1, 2 or 3")
         beatmapData = glob.db.fetch("SELECT beatmap_md5, song_name, mode FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [beatmapID])
         if beatmapData is None:
@@ -373,9 +386,7 @@ def _wrapper_():
         username = message[0].strip()
         if not username:
             raise exceptions.invalidArgumentsException("Please provide a username")
-        userID = userUtils.getIDSafe(username)
-        if userID is None:
-            raise exceptions.userNotFoundException("No such user")
+        userID = lookupUser(username)
         _match = getCurrentMatch(channel)
         slotID = _match.getUserSlotID(userID)
         if slotID is None:
@@ -439,9 +450,7 @@ def _wrapper_():
         colour = message[1].lower().strip()
         if colour not in ["red", "blue"]:
             raise exceptions.invalidArgumentsException("Team colour must be red or blue")
-        userID = userUtils.getIDSafe(username)
-        if userID is None:
-            raise exceptions.userNotFoundException("No such user")
+        userID = lookupUser(username)
         _match = getCurrentMatch(channel)
         _match.changeTeam(userID, matchTeams.BLUE if colour == "blue" else matchTeams.RED)
         return "{} is now in {} team".format(username, colour)
@@ -494,17 +503,17 @@ def _wrapper_():
     commands = {
         "checkperm": command_t(checkPerms, True, '', '', 'basic'),
         "listref": command_t(listReferee, True, '', 'list current match referees', 'basic'),
-        "addref": command_t(addReferee, True, '<username>', 'add user to match referees', 'owner'),
-        "rmref": command_t(removeReferee, True, '<username>', 'remove user from match referees', 'owner'),
+        "addref": command_t(addReferee, True, '<username>', 'add user to match referees', 'creator'),
+        "rmref": command_t(removeReferee, True, '<username>', 'remove user from match referees', 'creator'),
         "make": command_t(make, False, '<name>', 'create a room', 'basic'),
-        "close": command_t(close, True, '<name>', 'close room', 'owner'),
+        "close": command_t(close, True, '<name>', 'close room', 'creator'),
         # "join": join,
         "lock": command_t(lock, True, '', '', 'host'),
         "unlock": command_t(unlock, True, '', '', 'host'),
         "size": command_t(size, True, '<2-16>', '', 'referee'),
         "move": command_t(move, True, '<username> <slot#>', '', 'referee'),
-        "host": command_t(host, True, '<username>', '', 'owner'),
-        "clearhost": command_t(clearHost, True, '', '', 'owner'),
+        "host": command_t(host, True, '<username>', '', 'creator'),
+        "clearhost": command_t(clearHost, True, '', '', 'creator'),
         "timer": command_t(timer, True, '[timer]', '', 'basic'),
         "start": command_t(start, True, '[timer]', '', 'referee'),
         "aborttimer": command_t(abortTimer, True, '', '', 'basic'),
@@ -548,8 +557,12 @@ def _wrapper_():
             targetMPPower = perm_level.index(command_data.perm)
             if userMPPower < targetMPPower:
                 return None
-        return command_data.fun(sender, channel, message)
-        pass
+        try:
+            return command_data.fun(sender, channel, args)
+        except (exceptions.invalidArgumentsException, exceptions.userNotFoundException) as e:
+            return str(e)
+        except:
+            raise
     
     return handler
 handler = _wrapper_()
