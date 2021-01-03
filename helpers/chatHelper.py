@@ -187,10 +187,6 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		if token.isSilenced():
 			raise exceptions.userSilencedException()
 
-		# Redirect !report to the bot
-		if message.startswith("!report"):
-			to = glob.BOT_NAME
-
 		# Bancho style.
 		isSPub = to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_") or to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_")
 		forBot = to.lower() == glob.BOT_NAME.lower()
@@ -198,10 +194,10 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		if botCommand:
 			redirectBot = not (token.admin or isSPub)
 			if to[0] == '#' or forBot:
-				message = message[1:]
+				pass
 			if redirectBot:
 				to = glob.BOT_NAME
-			# log.info(f'Redirect {redirectBot} ({token.admin}/{isSPub}) -> {to}({forBot}) -> {message}')
+			log.info(f'Redirect {redirectBot} ({token.admin}/{isSPub}) -> {to}({forBot}) -> {message}')
 		
 		# Determine internal name if needed
 		# (toclient is used clientwise for #multiplayer and #spectator channels)
@@ -219,6 +215,7 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		elif to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_"):
 			toClient = "#multiplayer"
 
+		isChannel = to.startswith("#")
 		# Make sure the message is valid
 		if not message.strip():
 			raise exceptions.invalidArgumentsException()
@@ -232,8 +229,24 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		# Build packet bytes
 		packet = serverPackets.sendMessage(token.username, toClient, message)
 
+		# Send the message to IRC
+		if glob.irc and toIRC:
+			messageSplitInLines = message.encode("latin-1").decode("utf-8").split("\n")
+			for line in messageSplitInLines:
+				if line == messageSplitInLines[:1] and line == "":
+					continue
+				glob.ircServer.banchoMessage(fro, to, line)
+		
+		# Spam protection (ignore the bot)
+		if token.userID > 1 and not token.admin:
+			token.spamProtection()
+		
+		# File and discord logs (public chat only)
+		if to.startswith("#") and not (message.startswith("\x01ACTION is playing") and to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_")):
+			log.chat("{fro} @ {to}: {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
+			glob.schiavo.sendChatlog("**{fro} @ {to}:** {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
+		
 		# Send the message
-		isChannel = to.startswith("#")
 		if isChannel:
 			# CHANNEL
 			# Make sure the channel exists
@@ -287,27 +300,11 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 			# Everything seems fine, send packet
 			recipientToken.enqueue(packet)
 
-		# Send the message to IRC
-		if glob.irc and toIRC:
-			messageSplitInLines = message.encode("latin-1").decode("utf-8").split("\n")
-			for line in messageSplitInLines:
-				if line == messageSplitInLines[:1] and line == "":
-					continue
-				glob.ircServer.banchoMessage(fro, to, line)
-		
-		# Spam protection (ignore the bot)
-		if token.userID > 1 or token.admin:
-			token.spamProtection()
-		
-		# File and discord logs (public chat only)
-		if to.startswith("#") and not (message.startswith("\x01ACTION is playing") and to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_")):
-			log.chat("{fro} @ {to}: {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
-			glob.schiavo.sendChatlog("**{fro} @ {to}:** {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
-		
 		# Some bot message
 		if (isChannel or forBot) and not (fro == glob.BOT_NAME):
 			if botCommand:
-				fokaMessage = fokabot.fokabotCommands(token.username, to, message)
+				msgOffset = 0 if forBot else 1
+				fokaMessage = fokabot.fokabotCommands(token.username, to, message[msgOffset:])
 			else:
 				fokaMessage = fokabot.fokabotResponse(token.username, to, message)
 			if fokaMessage:
