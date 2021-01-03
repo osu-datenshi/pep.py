@@ -944,7 +944,7 @@ def postAnnouncement(fro, chan, message): # Post to #announce ingame
 	# send to discord
 	webhook = DiscordWebhook(url=glob.conf.config["discord"]["announcement"], content='@everyone')
 	embed = DiscordEmbed(description='{}'.format(announcement), color=242424)
-	embed.set_author(name='Staff : {}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.osu.troke.id/{}'.format(str(userID)))
+	embed.set_author(name='Staff : {}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.troke.id/{}'.format(str(userID)))
 	embed.set_footer(text='This announcement was posted from in-game')
 	webhook.add_embed(embed)
 	log.info("[ANNOUNCE] Announce masuk ke discord bro")

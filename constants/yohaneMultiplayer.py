@@ -24,7 +24,7 @@ def _wrapper_():
             return perm_level[3]
         elif userID in match.referees:
             return perm_level[2]
-        elif userID in [playerSlot.userID for playerSlot in match.slots]:
+        elif userID in [glob.tokens.tokens[slot.user].userID for slot in match.slots]:
             return perm_level[1]
         else:
             return perm_level[0]
@@ -36,6 +36,11 @@ def _wrapper_():
     def getCurrentMatch(channel):
         return glob.matches.matches[getCurrentMatchID(channel)]
     
+    def checkPerms(sender, channel, message):
+        userID  = userUtils.getID(sender)
+        match   = getCurrentMatch(channel)
+        return f"{sender} permission level is {getMPPermission(match,userID)}"
+        
     def listReferee(sender, channel, message):
         _match = getCurrentMatch(channel)
         return str(_match.referees)
@@ -72,7 +77,7 @@ def _wrapper_():
         matchName = " ".join(message[0:]).strip()
         if not matchName:
             raise exceptions.invalidArgumentsException("Match name must not be empty!")
-        userID = userUtils.getIDSafe(sender)
+        userID = userUtils.getID(sender)
         matchID = glob.matches.createMatch(matchName, generalUtils.stringMd5(generalUtils.randomString(32)), 0, "Tournament", "", 0, -1, creatorUserID=userID, isTourney=True)
         glob.matches.matches[matchID].sendUpdates()
         return "Tourney match #{} created!".format(matchID)
@@ -164,7 +169,7 @@ def _wrapper_():
                 callTick = False
                 callTick = callTick or (self.count >  60 and not (self.count % 60))
                 callTick = callTick or (self.count <= 60 and not (self.count % 10))
-                callTick = callTick or (self.count <= 50 and not (self.count %  1))
+                callTick = callTick or (self.count <=  5 and not (self.count %  1))
                 if callTick:
                     self.onTick(self.count)
                 self.count -= 1
@@ -180,11 +185,14 @@ def _wrapper_():
         def abort(self):
             self.state = 3
             self.onAbort()
+        @property
+        def level(self):
+            return self.perm
     
     timerList = {}
     
     def _mainTimer(matchID, newTimer=None):
-        if newValue is None:
+        if newTimer is None:
             if matchID not in timerList:
                 timerList[matchID] = None
         else:
@@ -197,7 +205,7 @@ def _wrapper_():
         count   = 30
         if message[0].isdigit() and int(message[0],10) > 0:
             count = int(message[0],10)
-        userID  = userUtils.getIDSafe(sender)
+        userID  = userUtils.getID(sender)
         matchID = getCurrentMatchID(channel)
         match   = getCurrentMatch(channel)
         level   = getMPPermissionLevel(match,userID)
@@ -214,16 +222,17 @@ def _wrapper_():
             chat.sendMessage(glob.BOT_NAME, channel, "Countdown aborted")
         timer  = countdown(count, level, onTick, onAction, onAbort)
         ptimer = _mainTimer(matchID)
-        if timer.level < ptimer.level:
-            return "Ask the room {perm_level[ptimer.level]} to abort it!"
+        if ptimer is not None and timer.level < ptimer.level:
+            return f"Ask the room {perm_level[ptimer.level]} to abort it!"
         _mainTimer(matchID, timer)
         timer.start()
+        return f"Countdown starts for {count} second(s)."
     
     def start(sender, channel, message):
         count   = 0
         if message[0].isdigit() and int(message[0],10) >= 0:
             count = int(message[0],10)
-        userID  = userUtils.getIDSafe(sender)
+        userID  = userUtils.getID(sender)
         matchID = getCurrentMatchID(channel)
         match   = getCurrentMatch(channel)
         if match.inProgress:
@@ -234,14 +243,14 @@ def _wrapper_():
             for i, slot in enumerate(match.slots):
                 if slot.status != slotStatuses.READY and slot.user is not None:
                     someoneNotReady = True
-                    _match.toggleSlotReady(i)
+                    match.toggleSlotReady(i)
         def triggerStart():
             success = match.start()
             if not success:
-                chat.sendMessage(glob.BOT_NAME, chan, "Couldn't start match. Make sure there are enough players and "
+                chat.sendMessage(glob.BOT_NAME, channel, "Couldn't start match. Make sure there are enough players and "
                                                   "teams are valid. The match has been unlocked.")
             else:
-                chat.sendMessage(glob.BOT_NAME, chan, "Match have started.")
+                chat.sendMessage(glob.BOT_NAME, channel, "Match have started.")
         def onTick(tick):
             fmt = ""
             if tick >= 60:
@@ -261,19 +270,27 @@ def _wrapper_():
         match.isStarting = count > 0
         timer = countdown(count, level, onTick, onAction, onAbort)
         ptimer = _mainTimer(matchID)
-        if timer.level < ptimer.level:
-            return "Ask the room {perm_level[ptimer.level]} to abort it!"
-        _mainTimer(matchID, timer)
-        forceReady()
-        timer.start()
+        if ptimer is not None and timer.level < ptimer.level:
+            return f"Ask the room {perm_level[ptimer.level]} to abort it!"
+        if count > 0:
+            _mainTimer(matchID, timer)
+            forceReady()
+            timer.start()
+            return f"Match will start in {count} second(s)..."
+        else:
+            forceReady()
+            triggerStart()
+            return "Match will begin soon! Good luck!"
     
     def abortTimer(sender, channel, message):
-        userID  = userUtils.getIDSafe(sender)
+        userID  = userUtils.getID(sender)
         matchID = getCurrentMatchID(channel)
         match   = getCurrentMatch(channel)
         level   = getMPPermissionLevel(match,userID)
         ptimer  = _mainTimer(matchID)
-        if level < ptimer.level:
+        if ptimer is None or ptimer.state != 1:
+            return "Nothing happened."
+        elif level < ptimer.level:
             return "Ask the room {perm_level[ptimer.level]} to abort it!"
         else:
             ptimer.abort()
@@ -473,8 +490,9 @@ def _wrapper_():
         _match.sendUpdates()
         return "Match scoring type set to scorev{}".format(message[0])
 
-    command_t = namedtuple('command_t', ('mpOnly', 'fun', 'syntax', 'description', 'perm'))
+    command_t = namedtuple('command_t', ('fun', 'mpOnly', 'syntax', 'description', 'perm'))
     commands = {
+        "checkperm": command_t(checkPerms, True, '', '', 'basic'),
         "listref": command_t(listReferee, True, '', 'list current match referees', 'basic'),
         "addref": command_t(addReferee, True, '<username>', 'add user to match referees', 'owner'),
         "rmref": command_t(removeReferee, True, '<username>', 'remove user from match referees', 'owner'),
@@ -503,18 +521,30 @@ def _wrapper_():
         "scorev": command_t(scoreVersion, True, '<version>', '', 'referee'),
     }
     def help(sender, channel, message):
+        userID = userUtils.getID(sender)
+        for command, command_data in commands.items():
+            chat.sendMessage(glob.BOT_NAME, sender, f"!mp {command} {command_data.syntax} {('(requires %s or higher)'.format(command_data.perm) if command_data.perm != 'basic' else '') if command_data.mpOnly else '*can be used outside mp room*'}".strip())
+        chat.sendMessage(glob.BOT_NAME, sender, "This command still underwent heavy rewriting, those ugly terms and such will go soon™.")
+        chat.sendMessage(glob.BOT_NAME, sender, "Let (us) me know about the bancho mimicking that I need to do, I'll do my best!")
+        gloryID = 3 # oi.
+        if userID == gloryID:
+            chat.sendMessage(glob.BOT_NAME, sender, "-- a note that you left behind.")
+        else:
+            gloryName = userUtils.getUsername(gloryID)
+            chat.sendMessage(glob.BOT_NAME, sender, f"-- {gloryName}.")
         pass
+    commands['help'] = command_t(help, False, '', '', 'basic')
     def handler(sender, channel, message):
         action, args = message[0].lower().strip(), message[1:]
         if action not in commands:
             return None
         command_data  = commands[action]
-        userID        = userUtils.getIDSafe(sender)
+        userID        = userUtils.getID(sender)
         if command_data.mpOnly:
             if not channel.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}"):
                 return None
             match         = getCurrentMatch(channel)
-            userMPPower   = getMPPermissionLevel(userID)
+            userMPPower   = getMPPermissionLevel(match, userID)
             targetMPPower = perm_level.index(command_data.perm)
             if userMPPower < targetMPPower:
                 return None
