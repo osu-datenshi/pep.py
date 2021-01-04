@@ -188,7 +188,7 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 			raise exceptions.userSilencedException()
 
 		# Bancho style.
-		isSPub = to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_") or to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_")
+		isSPub = to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_") or to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_") or to in ('#spectator', '#multiplayer')
 		forBot = to.lower() == glob.BOT_NAME.lower()
 		botCommand = (to[0] == '#' and message[0] == '!') or forBot
 		if botCommand:

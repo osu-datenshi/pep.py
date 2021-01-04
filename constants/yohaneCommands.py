@@ -95,11 +95,10 @@ def faq(fro, chan, message):
 
 def roll(fro, chan, message):
 	maxPoints = 100
-	if len(message) >= 1:
-		if message[0].isdigit() and int(message[0]) > 0:
-			maxPoints = int(message[0])
+	if len(message) >= 1 and (message[0].isdigit() and int(message[0]) > 0):
+		maxPoints = int(message[0])
 
-	points = random.randrange(0,maxPoints)
+	points = random.randint(1,maxPoints)
 	return "{} rolls {} points!".format(fro, str(points))
 
 #def ask(fro, chan, message):
@@ -155,7 +154,7 @@ def kickAll(fro, chan, message):
 		if i in glob.tokens.tokens:
 			glob.tokens.tokens[i].kick()
 
-	return "Whoops! Rip everyone."
+	return "Everyone went to the darkness before I could... I'm jealous."
 
 def kick(fro, chan, message):
 	# Get parameters
@@ -173,7 +172,7 @@ def kick(fro, chan, message):
 		i.kick()
 
 	# Bot response
-	return "{} has been kicked from the server.".format(target)
+	return "{} is thrown to the Shadow Realm.".format(target)
 
 def fokabotReconnect(fro, chan, message):
 	# Check if the bot is already connected

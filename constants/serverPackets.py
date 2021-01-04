@@ -118,10 +118,10 @@ def userPanel(userID, force = False):
 	# Get username color according to rank
 	# Only admins and normal users are currently supported
 	userRank = 0
-	if username == glob.BOT_NAME:
-		userRank |= userRanks.MOD
-	elif userID == 2:
+	if userID in (1,2,3):
 		userRank |= userRanks.PEPPY
+	elif username == glob.BOT_NAME:
+		userRank |= userRanks.MOD
 	elif userUtils.isInPrivilegeGroup(userID, "Developer"):
 		userRank |= userRanks.ADMIN
 	elif userUtils.isInPrivilegeGroup(userID, "Community Manager"):

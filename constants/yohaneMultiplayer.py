@@ -245,7 +245,7 @@ def _wrapper_():
     
     def start(sender, channel, message):
         count   = 0
-        if message[0].isdigit() and int(message[0],10) >= 0:
+        if len(message) > 0 and message[0].isdigit() and int(message[0],10) >= 0:
             count = int(message[0],10)
         userID  = userUtils.getID(sender)
         matchID = getCurrentMatchID(channel)
