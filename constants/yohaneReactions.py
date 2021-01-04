@@ -22,7 +22,7 @@ triggers = [
         "match": "word",
         "callback": puritit
     }, {
-        "trigger": f"\x01ACTION gaplok {glob.BOT_NAME}\x01",
+        "trigger": f"\x01ACTION gaplok Yohane\x01",
         "match": "exact",
         "callback": gaplok
     }, {

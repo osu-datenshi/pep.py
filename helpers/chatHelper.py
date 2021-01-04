@@ -54,6 +54,7 @@ def joinChannel(userID = 0, channel = "", token = None, toIRC = True, force=Fals
 		# Make sure the channel exists
 		if channel in chatChannels.RESERVED_CHANNELS:
 			sendMessage(glob.BOT_NAME, token.username, "\x01ACTION gaplok kamu\x01")
+			token.enqueue(serverPackets.notification("You have been gaplok'd"))
 			return 403
 		
 		if channel not in glob.channels.channels:
@@ -201,8 +202,9 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		if token.isSilenced():
 			raise exceptions.userSilencedException()
 
-		if channel in chatChannels.RESERVED_CHANNELS:
+		if to in chatChannels.RESERVED_CHANNELS:
 			sendMessage(glob.BOT_NAME, token.username, "\x01ACTION gaplok kamu\x01")
+			token.enqueue(serverPackets.notification("You have been gaplok'd"))
 			return 403
 		
 		# Bancho style.

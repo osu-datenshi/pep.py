@@ -801,7 +801,7 @@ class match:
 			return False
 		
 		# Ignore team requirement. Bancho can make it, but why Ripple?????
-		if not Force:
+		if not force:
 			if not self.checkTeams():
 				return False
 
