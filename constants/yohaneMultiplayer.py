@@ -260,7 +260,7 @@ def _wrapper_():
                     someoneNotReady = True
                     match.toggleSlotReady(i)
         def triggerStart():
-            success = match.start()
+            success = match.start(force=True)
             if not success:
                 chat.sendMessage(glob.BOT_NAME, channel, "Couldn't start match. Make sure there are enough players and "
                                                   "teams are valid. The match has been unlocked.")
@@ -479,8 +479,8 @@ def _wrapper_():
             else:
                 readableStatus = readableStatuses[slot.status]
             empty = False
-            msg += "* [{team}] <{status}> ~ {username}{mods}{nl}".format(
-                team="red" if slot.team == matchTeams.RED else "blue" if slot.team == matchTeams.BLUE else "!! no team !!",
+            msg += "* {team}{username}{mods} <{status}>{nl}".format(
+                team="[R] " if slot.team == matchTeams.RED else "[B] " if slot.team == matchTeams.BLUE else "",
                 status=readableStatus,
                 username=glob.tokens.tokens[slot.user].username,
                 mods=" (+ {})".format(generalUtils.readableMods(slot.mods)) if slot.mods > 0 else "",

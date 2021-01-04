@@ -8,6 +8,26 @@ from events import logoutEvent
 from objects import fokabot
 from objects import glob
 
+def channelMasking(token, channel, userID = 0):
+	channelClient = channel
+	if channel == chatChannels.SPECTATOR_MASK:
+		if token.spectating is None:
+			s = userID
+		else:
+			s = token.spectatingUserID
+		channel = "{}_{}".format(chatChannels.SPECTATOR_PREFIX, s)
+		# SILENCE
+		if s < 2:
+			return (None, None)
+	elif channel == chatChannels.MULTIPLAYER_MASK:
+		channel = "{}_{}".format(chatChannels.MULTIPLAYER_PREFIX, token.matchID)
+		if token.matchID < 1:
+			return (None, None)
+	elif channel.startswith(f"{chatChannels.SPECTATOR_PREFIX}_"):
+		channelClient = chatChannels.SPECTATOR_MASK
+	elif channel.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_"):
+		channelClient = chatChannels.MULTIPLAYER_MASK
+	return (channel, channelClient)
 
 def joinChannel(userID = 0, channel = "", token = None, toIRC = True, force=False):
 	"""
@@ -32,6 +52,10 @@ def joinChannel(userID = 0, channel = "", token = None, toIRC = True, force=Fals
 
 		# Normal channel, do check stuff
 		# Make sure the channel exists
+		if channel in chatChannels.RESERVED_CHANNELS:
+			sendMessage(glob.BOT_NAME, token.username, "\x01ACTION gaplok kamu\x01")
+			return 403
+		
 		if channel not in glob.channels.channels:
 			raise exceptions.channelUnknownException()
 
@@ -93,19 +117,9 @@ def partChannel(userID = 0, channel = "", token = None, toIRC = True, kick = Fal
 
 		# Determine internal/client name if needed
 		# (toclient is used clientwise for #multiplayer and #spectator channels)
-		channelClient = channel
-		if channel == "#spectator":
-			if token.spectating is None:
-				s = userID
-			else:
-				s = token.spectatingUserID
-			channel = "{}_{}".format(chatChannels.SPECTATOR_PREFIX, s)
-		elif channel == "#multiplayer":
-			channel = "{}_{}".format(chatChannels.MULTIPLAYER_PREFIX, token.matchID)
-		elif channel.startswith(f"{chatChannels.SPECTATOR_PREFIX}_"):
-			channelClient = "#spectator"
-		elif channel.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_"):
-			channelClient = "#multiplayer"
+		channel, channelClient = channelMasking(token, channel, userID=userID)
+		if channel is None and channelClient is None:
+			return 0
 
 		# Make sure the channel exists
 		if channel not in glob.channels.channels:
@@ -187,8 +201,12 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		if token.isSilenced():
 			raise exceptions.userSilencedException()
 
+		if channel in chatChannels.RESERVED_CHANNELS:
+			sendMessage(glob.BOT_NAME, token.username, "\x01ACTION gaplok kamu\x01")
+			return 403
+		
 		# Bancho style.
-		isSPub = to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_") or to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_") or to in ('#spectator', '#multiplayer')
+		isSPub = to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_") or to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_") or to in (chatChannels.SPECTATOR_MASK, chatChannels.MULTIPLAYER_MASK)
 		forBot = to.lower() == glob.BOT_NAME.lower()
 		botCommand = (to[0] == '#' and message[0] == '!') or forBot
 		if botCommand:
@@ -198,24 +216,14 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 			if redirectBot:
 				to = glob.BOT_NAME
 			log.info(f'Redirect {redirectBot} ({token.admin}/{isSPub}) -> {to}({forBot}) -> {message}')
-		if message.lower().startswith('!report'):
+		if message.lower().split()[0] in ('!help', '!report'):
 			to = glob.BOT_NAME
 		
 		# Determine internal name if needed
 		# (toclient is used clientwise for #multiplayer and #spectator channels)
-		toClient = to
-		if to == "#spectator":
-			if token.spectating is None:
-				s = token.userID
-			else:
-				s = token.spectatingUserID
-			to = "{}_{}".format(chatChannels.SPECTATOR_PREFIX, s)
-		elif to == "#multiplayer":
-			to = "{}_{}".format(chatChannels.MULTIPLAYER_PREFIX, token.matchID)
-		elif to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_"):
-			toClient = "#spectator"
-		elif to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_"):
-			toClient = "#multiplayer"
+		to, toClient = channelMasking(token, to, userID=token.userID)
+		if to is None and toClient is None:
+			return 0
 
 		isChannel = to.startswith("#")
 		# Make sure the message is valid
@@ -244,7 +252,10 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 			token.spamProtection()
 		
 		# File and discord logs (public chat only)
-		if to.startswith("#") and not (message.startswith("\x01ACTION is playing") and to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_")):
+		eligibleLogging = to.startswith("#") and not (message.startswith("\x01ACTION is playing") and to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_"))
+		# this one is to mark "!" usage, as those are thrown directly to the bot.
+		eligibleLogging = eligibleLogging or (to == glob.BOT_NAME and not forBot)
+		if eligibleLogging:
 			log.chat("{fro} @ {to}: {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
 			glob.schiavo.sendChatlog("**{fro} @ {to}:** {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
 		
@@ -301,16 +312,20 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 
 			# Everything seems fine, send packet
 			recipientToken.enqueue(packet)
-
+		
+		# Bot must not react to their own message.
+		if fro == glob.BOT_NAME:
+			return 0
+		
 		# Some bot message
-		if (isChannel or forBot) and not (fro == glob.BOT_NAME):
+		if (isChannel or to == glob.BOT_NAME):
 			if botCommand:
 				msgOffset = 0 if forBot else 1
-				fokaMessage = fokabot.fokabotCommands(token.username, to, message[msgOffset:])
+				da10Message = fokabot.fokabotCommands(token.username, to, message[msgOffset:])
 			else:
-				fokaMessage = fokabot.fokabotResponse(token.username, to, message)
-			if fokaMessage:
-				sendMessage(glob.BOT_NAME, to if isChannel else fro, fokaMessage)
+				da10Message = fokabot.fokabotResponse(token.username, to, message)
+			if da10Message:
+				sendMessage(glob.BOT_NAME, to if isChannel else fro, da10Message)
 		return 0
 	except exceptions.userSilencedException:
 		token.enqueue(serverPackets.silenceEndTime(token.getSilenceSecondsLeft()))

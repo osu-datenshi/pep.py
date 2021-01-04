@@ -787,7 +787,7 @@ class match:
 		log.warning("MPROOM{}: Invalid teams!".format(self.matchID))
 		return False
 
-	def start(self):
+	def start(self, force=False):
 		"""
 		Start the match
 
@@ -797,8 +797,13 @@ class match:
 		self.isStarting = False
 
 		# Make sure we have enough players
-		if self.countUsers() < 1 or not self.checkTeams():
+		if self.countUsers() < 1:
 			return False
+		
+		# Ignore team requirement. Bancho can make it, but why Ripple?????
+		if not Force:
+			if not self.checkTeams():
+				return False
 
 		# Create playing channel
 		glob.streams.add(self.playingStreamName)
