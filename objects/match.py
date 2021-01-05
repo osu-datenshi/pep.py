@@ -97,9 +97,10 @@ class match:
 		return self._inProgress
 	
 	@inProgress.setter
-	def inProgress_harmonia(self, value):
+	def inProgress(self, value):
 		log.info("MPROOM {} ({}) progress set to {}".format(self.matchID,self.matchHash,value))
 		self._inProgress = value
+		
 	
 	def addReferee(self, referUserId):
 		self.referees.append(referUserId)

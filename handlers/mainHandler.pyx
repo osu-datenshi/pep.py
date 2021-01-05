@@ -164,7 +164,7 @@ class handler(requestsManager.asyncRequestHandler):
 						packetIDs.client_tournamentJoinMatchChannel: handleEvent(tournamentJoinMatchChannelEvent),
 						packetIDs.client_tournamentLeaveMatchChannel: handleEvent(tournamentLeaveMatchChannelEvent),
 						
-						79: unknownEvent.event0079,
+						79: handleEvent(unknownEvent.event0079),
 					}
 
 					# Packets processed if in restricted mode.
