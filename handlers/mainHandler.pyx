@@ -54,6 +54,7 @@ from events import userStatsRequestEvent
 from events import tournamentMatchInfoRequestEvent
 from events import tournamentJoinMatchChannelEvent
 from events import tournamentLeaveMatchChannelEvent
+from events import unknownEvent
 from helpers import packetHelper
 from objects import glob
 from common.sentry import sentry
@@ -162,6 +163,8 @@ class handler(requestsManager.asyncRequestHandler):
 						packetIDs.client_tournamentMatchInfoRequest: handleEvent(tournamentMatchInfoRequestEvent),
 						packetIDs.client_tournamentJoinMatchChannel: handleEvent(tournamentJoinMatchChannelEvent),
 						packetIDs.client_tournamentLeaveMatchChannel: handleEvent(tournamentLeaveMatchChannelEvent),
+						
+						79: unknownEvent.event0079,
 					}
 
 					# Packets processed if in restricted mode.
