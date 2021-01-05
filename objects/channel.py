@@ -1,6 +1,7 @@
 import logging
 
 from constants import exceptions
+from constants import chatChannels
 from objects import glob
 
 class channel:
@@ -33,12 +34,12 @@ class channel:
 
 	@property
 	def isSpecial(self):
-		return any(self.name.startswith(x) for x in ("#spect_", "#multi_"))
+		return any(self.name.startswith(x) for x in (f"{chatChannels.SPECTATOR_PREFIX}_", f"{chatChannels.MULTIPLAYER_PREFIX}_"))
 
 	@property
 	def clientName(self):
-		if self.name.startswith("#spect_"):
-			return "#spectator"
-		elif self.name.startswith("#multi_"):
-			return "#multiplayer"
+		if self.name.startswith(f"{chatChannels.SPECTATOR_PREFIX}_"):
+			return chatChannels.SPECTATOR_MASK
+		elif self.name.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_"):
+			return chatChannels.MULTIPLAYER_MASK
 		return self.name

@@ -219,13 +219,18 @@ def handle(tornadoRequest):
 		# Channel info end (before starting!?! wtf bancho?)
 		responseToken.enqueue(serverPackets.channelInfoEnd())
 		# Default opened channels
-		# TODO: Configurable default channels
-		chat.joinChannel(token=responseToken, channel="#osu")
-		chat.joinChannel(token=responseToken, channel="#announce")
+		if True:
+			for channelAutoJoin in glob.db.fetchAll('SELECT bcc.privilege_bit AS pb, bc.name AS cn FROM bancho_client_channels as bcc JOIN bancho_channels AS bc ON bcc.channel_id = bc.id'):
+				if responseToken.admin or responseToken.privileges & (1 << channelAutoJoin['pb']):
+					chat.joinChannel(token=responseToken, channel=channelAutoJoin['cn'])
+		else:
+			chat.joinChannel(token=responseToken, channel="#osu")
+			chat.joinChannel(token=responseToken, channel="#announce")
+			chat.joinChannel(token=responseToken, channel="#ranked-now")
 
-		# Join admin channel if we are an admin
-		if responseToken.admin:
-			chat.joinChannel(token=responseToken, channel="#admin")
+			# Join admin channel if we are an admin
+			if responseToken.admin or responseToken.privileges & privileges.ADMIN_MANAGE_BEATMAPS:
+				chat.joinChannel(token=responseToken, channel="#admin")
 
 		# Output channels info
 		for key, value in glob.channels.channels.items():

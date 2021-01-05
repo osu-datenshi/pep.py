@@ -178,6 +178,7 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 	:param toIRC: if True, send the message to IRC. If False, send it to Bancho only. Default: True
 	:return: 0 if joined or other IRC code in case of error. Needed only on IRC-side
 	"""
+	reencode = lambda s: s.encode('latin-1').decode('utf-8')
 	try:
 		#tokenString = ""
 		# Get token object if not passed
@@ -243,7 +244,7 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 
 		# Send the message to IRC
 		if glob.irc and toIRC:
-			messageSplitInLines = message.encode("latin-1").decode("utf-8").split("\n")
+			messageSplitInLines = reencode(message).split("\n")
 			for line in messageSplitInLines:
 				if line == messageSplitInLines[:1] and line == "":
 					continue
@@ -258,8 +259,8 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		# this one is to mark "!" usage, as those are thrown directly to the bot.
 		eligibleLogging = eligibleLogging or (to == glob.BOT_NAME and not forBot)
 		if eligibleLogging:
-			log.chat("{fro} @ {to}: {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
-			glob.schiavo.sendChatlog("**{fro} @ {to}:** {message}".format(fro=token.username, to=to, message=message.encode("latin-1").decode("utf-8")))
+			log.chat("{fro} @ {to}: {message}".format(fro=token.username, to=to, message=reencode(message)))
+			glob.schiavo.sendChatlog("**{fro} @ {to}:** {message}".format(fro=token.username, to=to, message=reencode(message)))
 		
 		# Send the message
 		if isChannel:

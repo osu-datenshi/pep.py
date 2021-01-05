@@ -852,7 +852,7 @@ def rtx(fro, chan, message):
 		return "{}: user not found".format(target)
 	userToken = glob.tokens.getTokenFromUserID(targetUserID, ignoreIRC=True, _all=False)
 	userToken.enqueue(serverPackets.rtx(message))
-	return "👌👌👌👌👌 :ok_hand: 👌👌👌👌👌"
+	return "whatever you wish"
 	
 def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 	# Put the gathered values into variables to be used later
@@ -871,7 +871,7 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 	if (userPriv & privileges.ADMIN_MANAGE_BEATMAPS) != privileges.ADMIN_MANAGE_BEATMAPS:
 		# silent ignore.
 		return None
-	if chan not in ('#admin', glob.BOT_NAME):
+	if chan not in (chatChannels.SPECIAL_CHANNEL, glob.BOT_NAME):
 		return "Map ranking is not permitted in regular channels, please do so in PMs with AC (or #admin if administrator)."
 	
 	isSet = False
@@ -921,7 +921,8 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 	log.rap(userID, "has {} beatmap ({}): {} ({})".format(status, mapType, beatmapData["song_name"], mapID), True)
 	
 	def banchoCallback(msg):
-		chat.sendMessage(glob.BOT_NAME, chatChannels.ANNOUNCE_CHANNEL, re.sub(r"\!$",f" by [https://osu.troke.id/u/{userID} {name}]!",msg))
+		for chan in (chatChannels.ANNOUNCE_CHANNEL, chatChannels.ANNOUNCE_RANK_CHANNEL):
+			chat.sendMessage(glob.BOT_NAME, chan, re.sub(r"\!$",f" by [https://osu.troke.id/u/{userID} {name}]!",msg))
 	def discordCallback(msg, idTuple):
 		webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
 		embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(msg, beatmapData["beatmapset_id"]), color=242424)

@@ -550,7 +550,9 @@ class Client:
 			self.replyCode(502, "yuh")
 			return
 		if len(arguments) == 1:
-			if isSelf:
+			if glob.BOT_NAME:
+				self.replyCode(221, "{} +o".format(arguments[0]))
+			elif isSelf:
 				self.replyCode(221, "{} +i".format(arguments[0]))
 			else:
 				self.replyCode(324, "{} +nt".format(arguments[0]))
@@ -764,9 +766,13 @@ class Server:
 						client.checkAlive()
 					lastAliveCheck = now
 			except:
-				log.error("[IRC] Unknown error!\n```\n{}\n{}```".format(sys.exc_info(), traceback.format_exc()))
-				if glob.sentry and sentryClient is not None:
-					sentryClient.captureException()
+				try:
+					log.error("[IRC] Unknown error!\n```\n{}\n{}```".format(sys.exc_info(), traceback.format_exc()))
+					if glob.sentry and sentryClient is not None:
+						sentryClient.captureException()
+				except Exception as e:
+					glob.streams.broadcast("main", serverPackets.notification(msg))
+					return
 
 def main(port=6667):
 	"""

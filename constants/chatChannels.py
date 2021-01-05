@@ -1,5 +1,6 @@
 GENERAL_CHANNEL = '#osu'
 ANNOUNCE_CHANNEL = '#announce'
+ANNOUNCE_RANK_CHANNEL = '#ranked-now'
 SPECIAL_CHANNEL = '#admin'
 
 SPECTATOR_PREFIX = '#spect'
