@@ -98,7 +98,7 @@ class match:
 	
 	@inProgress.setter
 	def inProgress(self, value):
-		log.info("MPROOM {} ({}) progress set to {}".format(self.matchID,self.matchHash,value))
+		# log.info("MPROOM {} ({}) progress set to {}".format(self.matchID,self.matchHash,value))
 		self._inProgress = value
 		
 	

@@ -50,14 +50,23 @@ def handle(userToken, packetData):
 			"This is not your drama landfill.",
 			"I like cheese",
 			"AOBA IS NOT A CAT HE IS A DO(N)G",
-			"Datingu startuato"
+			"Datingu startuato",
+			"YAMI NI NOMARE YO"
 		]
 
 		# Set match name
 		match.matchName = packetData["matchName"] if packetData["matchName"] != "meme" else random.choice(memeTitles)
 
 		# Update match settings
-		match.inProgress = packetData["inProgress"]
+		# NOBODY SHOULD INTRUDE A SINGLE PLAYER MATCH AFTER ALL (tempfix)
+		slotTaken = [slot for slot in match.slots if slot.status & slotStatuses.OCCUPIED]
+		slotPlay   = [slot for slot in slotTaken if slot.status & slotStatuses.PLAYING]
+		log.info("MPROOM{}: ProgPkt({}) SlotPlay({} left)".format(match.matchID,inProgress,len(slotPlay)))
+		if len(slotTaken) <= 1:
+			match.inProgress = False
+		else:
+			inProgress = bool(packetData["inProgress"])
+			match.inProgress = len(slotPlay) > 0 and inProgress
 		if packetData["matchPassword"] != "":
 			match.matchPassword = generalUtils.stringMd5(packetData["matchPassword"])
 		else:
