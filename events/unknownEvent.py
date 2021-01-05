@@ -1,9 +1,13 @@
 # give noop for now
-def wrapEvents(event):
-    event.handle = event
+class lazyEventHandler():
+    __slots__ = ('fun',)
+    def __init__(self, fun):
+        self.fun = fun
+    def handle(self, userToken, packetData):
+        self.fun(userToken, packetData)
 
+@lazyEventHandler
 def event0079(userToken, packetData):
     pass
 
-event0079 = wrapEvents(event0079)
-del wrapEvents
+del lazyEventHandler
