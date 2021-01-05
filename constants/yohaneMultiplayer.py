@@ -36,6 +36,12 @@ def _wrapper_():
         return yohaneCommands.getMatchIDFromChannel(channel)
     def getCurrentMatch(channel):
         return glob.matches.matches[getCurrentMatchID(channel)]
+    def isMatchRunning(channel):
+        match = getCurrentMatch(channel)
+        return match.inProgress
+    def ensureMatchIdle(channel):
+        if isMatchRunning(channel):
+            return exceptions.invalidArgumentsException("Match is on progress")
     def lookupUserID(user):
         iter = []
         iter.append(userUtils.getID(user))
@@ -133,12 +139,14 @@ def _wrapper_():
     def size(sender, channel, message):
         if len(message) < 1 or not message[0].isdigit() or int(message[1]) < 2 or int(message[1]) > 16:
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp size <slots(2-16)>")
+        ensureMatchIdle(channel)
         matchSize = int(message[0])
         _match = getCurrentMatch(channel)
         _match.forceSize(matchSize)
         return "Match size changed to {}".format(matchSize)
 
     def move(sender, channel, message):
+        ensureMatchIdle(channel)
         log.info(message[0] + ' to ' + message[1])
         if len(message) < 2 or not message[1].isdigit() or int(message[1]) not in range(1,17):
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp move <username> <slot>")
@@ -247,11 +255,10 @@ def _wrapper_():
         count   = 0
         if len(message) > 0 and message[0].isdigit() and int(message[0],10) >= 0:
             count = int(message[0],10)
+        ensureMatchIdle(channel)
         userID  = userUtils.getID(sender)
         matchID = getCurrentMatchID(channel)
         match   = getCurrentMatch(channel)
-        if match.inProgress:
-            return "what the fuck are you doing, son?"
         level   = getMPPermissionLevel(match,userID)
         def forceReady():
             someoneNotReady = False
@@ -331,6 +338,7 @@ def _wrapper_():
     def map(sender, channel, message):
         if len(message) < 1 or not message[0].isdigit() or (len(message) == 2 and not message[1].isdigit()):
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp map <beatmapid> [<gamemode>]")
+        ensureMatchIdle(channel)
         beatmapID = int(message[0])
         gameMode = int(message[1]) if len(message) == 2 else 0
         if gameMode not in (0,1,2,3):
@@ -354,6 +362,7 @@ def _wrapper_():
                 (len(message) >= 2 and not message[1].isdigit()) or \
                 (len(message) >= 3 and not message[2].isdigit()):
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp set <teammode> [<scoremode>] [<size>]")
+        ensureMatchIdle(channel)
         _match = getCurrentMatch(channel)
         matchTeamType = int(message[0])
         matchScoringType = int(message[1]) if len(message) >= 2 else _match.matchScoringType
@@ -384,6 +393,7 @@ def _wrapper_():
     def kick(sender, channel, message):
         if len(message) < 1:
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp kick <username>")
+        ensureMatchIdle(channel)
         username = message[0].strip()
         if not username:
             raise exceptions.invalidArgumentsException("Please provide a username")
@@ -411,6 +421,7 @@ def _wrapper_():
     def mods(sender, channel, message):
         if len(message) < 1:
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp mods <mod1> [<mod2>] ...")
+        ensureMatchIdle(channel)
         _match = getCurrentMatch(channel)
         newMods = 0
         freeMod = False
@@ -445,6 +456,7 @@ def _wrapper_():
     def team(sender, channel, message):
         if len(message) < 2:
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp team <username> <colour>")
+        ensureMatchIdle(channel)
         username = message[0].strip()
         if not username:
             raise exceptions.invalidArgumentsException("Please provide a username")
@@ -495,6 +507,7 @@ def _wrapper_():
     def scoreVersion(sender, channel, message):
         if len(message) < 1 or message[0] not in ("1", "2"):
             raise exceptions.invalidArgumentsException("Wrong syntax: !mp scorev <1|2>")
+        ensureMatchIdle(channel)
         _match = getCurrentMatch(channel)
         _match.matchScoringType = matchScoringTypes.SCORE_V2 if message[0] == "2" else matchScoringTypes.SCORE
         _match.sendUpdates()
