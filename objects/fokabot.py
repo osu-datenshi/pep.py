@@ -73,12 +73,13 @@ def fokabotResponse(fro, chan, message):
 		elif match in ('regex', 'regexp'):
 			callIt = re.compile(reaction['trigger']).match(msg)
 		if callIt:
-			lastCall = commandBuckets.get(reaction['trigger'], 0)
+			bucketKey = f"{chan}_{reaction['trigger']}"
+			lastCall = commandBuckets.get(bucketKey, 0)
 			timeCall = time.time()
 			# consume the command, if its under cooldown deny it and stop the processing
 			if timeCall < lastCall + cmdcd:
 				return
-			commandBuckets[ reaction['trigger'] ] = timeCall
+			commandBuckets[bucketKey] = timeCall
 			return reaction['callback'](fro, chan, message)
 
 	# No commands triggered
