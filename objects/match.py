@@ -50,7 +50,7 @@ class match:
 		self.matchHash = "{:032x}".format(random.randrange(0, 1 << 128))
 		self.streamName = "multi/{}".format(self.matchID)
 		self.playingStreamName = "{}/playing".format(self.streamName)
-		self.inProgress = False
+		self._inProgress = False
 		self.mods = 0
 		self.matchName = matchName
 		self.matchPassword = matchPassword
@@ -91,6 +91,15 @@ class match:
 
 		# Clantag
 		self.getClan = getClan
+	
+	@property
+	def inProgress(self):
+		return self._inProgress
+	
+	@inProgress.setter
+	def inProgress_harmonia(self, value):
+		log.info("MPROOM {} ({}) progress set to {}".format(self.matchID,self.matchHash,value))
+		self._inProgress = value
 	
 	def addReferee(self, referUserId):
 		self.referees.append(referUserId)
