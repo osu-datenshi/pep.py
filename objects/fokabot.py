@@ -1,5 +1,6 @@
-"""FokaBot related functions"""
+"""Yohane related functions"""
 import re
+import time
 
 from common import generalUtils
 from common.constants import actions
@@ -12,12 +13,15 @@ from objects import glob
 # Tillerino np regex, compiled only once to increase performance
 npRegex = re.compile("^https?:\\/\\/osu\\.ppy\\.sh\\/b\\/(\\d*)")
 
+commandBuckets = {}
+
 def connect(timeOffset = 9):
 	"""
 	Connect FokaBot to Bancho
 
 	:return:
 	"""
+	commandBuckets.clear()
 	glob.BOT_NAME = userUtils.getUsername(1)
 	token = glob.tokens.addToken(1)
 	token.actionID = actions.IDLE
@@ -54,6 +58,7 @@ def fokabotResponse(fro, chan, message):
 	for reaction in yohaneReactions.triggers:
 		callIt = False
 		match  = reaction.get('match','starts')
+		cmdcd  = reaction.get('cooldown', 60)
 		if match == 'exact':
 			callIt = reaction['trigger'] == msg
 		elif match == 'partial':
@@ -61,10 +66,19 @@ def fokabotResponse(fro, chan, message):
 		elif match == 'word':
 			callIt = reaction['trigger'].lower() in msg.lower().split()
 		elif match == 'starts':
-			callIt = msg.lower().startswith(reaction['trigger'].lower() + ' ')
+			if len(msg) == len(reaction['trigger']):
+				callIt = msg.lower() == reaction['trigger'].lower()
+			else:
+				callIt = msg.lower().startswith(reaction['trigger'].lower() + ' ')
 		elif match in ('regex', 'regexp'):
 			callIt = re.compile(reaction['trigger']).match(msg)
 		if callIt:
+			lastCall = commandBuckets.fetch(reaction['trigger'], 0)
+			timeCall = time.time()
+			# consume the command, if its under cooldown deny it and stop the processing
+			if timecall < lastCall + cmdcd:
+				return
+			commandBuckets[ reaction['trigger'] ] = timeCall
 			return reaction['callback'](fro, chan, message)
 
 	# No commands triggered

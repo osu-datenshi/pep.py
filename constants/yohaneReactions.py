@@ -9,6 +9,9 @@ def okegan(sender, chan_from, arguments):
 def puritit(sender, chan_from, arguments):
     return "puritit bangsat 8("
 
+def normies_p(sender, chan_from, arguments):
+    return "wr wb"
+
 def gaplok(sender, chan_from, arguments):
     return f"\x01ACTION gaplok {sender} balik\x01"
 
@@ -21,6 +24,11 @@ triggers = [
         "trigger": "puritit",
         "match": "word",
         "callback": puritit
+    }, {
+        "trigger": "P",
+        "cooldown": 300,
+        "match": "starts",
+        "callback": normies_p
     }, {
         "trigger": f"\x01ACTION gaplok Yohane\x01",
         "match": "exact",
