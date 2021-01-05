@@ -76,7 +76,7 @@ def fokabotResponse(fro, chan, message):
 			lastCall = commandBuckets.get(reaction['trigger'], 0)
 			timeCall = time.time()
 			# consume the command, if its under cooldown deny it and stop the processing
-			if timecall < lastCall + cmdcd:
+			if timeCall < lastCall + cmdcd:
 				return
 			commandBuckets[ reaction['trigger'] ] = timeCall
 			return reaction['callback'](fro, chan, message)
