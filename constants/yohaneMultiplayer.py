@@ -75,7 +75,7 @@ def _wrapper_():
         if not username:
             raise exceptions.invalidArgumentsException("Please provide a username")
         userID = lookupUser(username)
-        _match.addRefer(userID)
+        _match.addReferee(userID)
         return "Added {} to referees".format(username)
 
     def removeReferee(sender, channel, message):
@@ -86,7 +86,7 @@ def _wrapper_():
         if not username:
             raise exceptions.invalidArgumentsException("Please provide a username")
         userID = lookupUser(username)
-        _match.removeRefer(userID)
+        _match.removeReferee(userID)
         return "Removed {} from referee".format(username)
 
     def make(sender, channel, message):
