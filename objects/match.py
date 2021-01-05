@@ -2,6 +2,7 @@ import copy
 import json
 import threading
 
+import random
 import time
 
 from common.log import logUtils as log
@@ -46,6 +47,7 @@ class match:
 		:param hostUserID: user id of the host
 		"""
 		self.matchID = matchID
+		self.matchHash = "{:032x}".format(random.randrange(0, 1 << 128))
 		self.streamName = "multi/{}".format(self.matchID)
 		self.playingStreamName = "{}/playing".format(self.streamName)
 		self.inProgress = False
@@ -573,7 +575,7 @@ class match:
 		:return:
 		"""
 		# Make sure the match is not locked
-		if self.isLocked or self.isStarting:
+		if self.isLocked or self.isStarting or self.inProgress:
 			return False
 
 		# Make sure the user is in room

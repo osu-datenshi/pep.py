@@ -294,8 +294,9 @@ def _wrapper_():
             return f"Match will start in {count} second(s)..."
         else:
             forceReady()
+            chat.sendMessage(glob.BOT_NAME, channel, "Match will begin soon! Good luck!")
             triggerStart()
-            return "Match will begin soon! Good luck!"
+            return None
     
     def abortTimer(sender, channel, message):
         userID  = userUtils.getID(sender)
@@ -343,7 +344,7 @@ def _wrapper_():
         _match.beatmapID = beatmapID
         _match.beatmapName = beatmapData["song_name"]
         _match.beatmapMD5 = beatmapData["beatmap_md5"]
-        _match.gameMode = gameMode if beatmapData['mode'] == 0 else beatmapData['mode']
+        _match.gameMode = gameMode if beatmapData.get('mode',0) == 0 else beatmapData.get('mode', gameMode)
         _match.resetReady()
         _match.sendUpdates()
         return "Match map has been updated"
@@ -460,7 +461,7 @@ def _wrapper_():
         single = False if len(message) < 2 else message[0].strip().lower() == "single"
         msg = "PLAYERS IN THIS MATCH "
         if not single:
-            msg += "(use !mp settings single for a single-line version):"
+            # msg += "(use !mp settings single for a single-line version):"
             msg += "\n"
         else:
             msg += ": "
