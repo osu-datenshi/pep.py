@@ -62,7 +62,7 @@ def joinChannel(userID = 0, channel = "", token = None, toIRC = True, force=Fals
 
 		# Make sure a game client is not trying to join a #multi_ or #spect_ channel manually
 		channelObject = glob.channels.channels[channel]
-		if channelObject.isSpecial and not token.irc and not force:
+		if channelObject.isSpecial and not token.irc and not force and not token.admin:
 			raise exceptions.channelUnknownException()
 
 		# Add the channel to our joined channel
@@ -280,7 +280,7 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 				raise exceptions.channelNoPermissionsException()
 
 			# Make sure we have write permissions
-			if not glob.channels.channels[to].publicWrite and not token.admin:
+			if not (token.admin or glob.channels.channels[to].publicWrite):
 				raise exceptions.channelNoPermissionsException()
 
 			# Add message in buffer
