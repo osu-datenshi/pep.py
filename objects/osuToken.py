@@ -157,10 +157,10 @@ class token:
 		if channelObject.name in self.joinedChannels:
 			raise exceptions.userAlreadyInChannelException()
 		pr = 0
-		for prd in glob.db.fetchAll('SELECT bcc.privilege_bit AS pb FROM bancho_client_channels as bcc JOIN bancho_channels AS bc ON bcc.channel_id = bc.id WHERE bc.name = ?', [channelObject.name]):
+		for prd in glob.db.fetchAll('SELECT bcc.privilege_bit AS pb FROM bancho_client_channels as bcc JOIN bancho_channels AS bc ON bcc.channel_id = bc.id WHERE bc.name = %s', [channelObject.name]):
 			if prd is None:
 				continue
-			pr = pr | (responseToken.privileges & (1 << prd['pb']))
+			pr = pr | (self.privileges & (1 << prd['pb']))
 		if not (self.admin or pr or channelObject.publicRead):
 			raise exceptions.channelNoPermissionsException()
 		self.joinedChannels.append(channelObject.name)
