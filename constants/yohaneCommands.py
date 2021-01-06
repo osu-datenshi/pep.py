@@ -983,7 +983,7 @@ def useScoreBoard(fro, chan, message):
 	return "You're using Scoreboard in {rx}.".format(rx='relax' if rx else 'vanilla')
 
 def boardVisibilityToggle(sender, channel, message):
-	mode = 'normal others you none'
+	mode = 'normal others you none'.split()
 	value = 0
 	if message[0].lower() in mode:
 		value = mode.index(message[0].lower())
@@ -999,7 +999,7 @@ def boardVisibilityToggle(sender, channel, message):
 def boardTypeToggle(sender, channel, message):
 	if 'setBoard' not in dir(userUtils):
 		return "zZzZzZzZ"
-	mode = 'score pp'
+	mode = 'score pp'.split()
 	relax = len(message) >= 2 and 'relax' == message[1].lower()
 	value = 0
 	if message[0].lower() in mode:
