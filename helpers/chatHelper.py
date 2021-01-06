@@ -213,7 +213,7 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 		forBot = to.lower() == glob.BOT_NAME.lower()
 		botCommand = (to[0] == '#' and message[0] == '!') or forBot
 		if botCommand:
-			redirectBot = not (token.admin or isSPub)
+			redirectBot = not (token.admin or isSPub or to.lower() == chatChannels.SPECIAL_CHANNEL)
 			if to[0] == '#' or forBot:
 				pass
 			if redirectBot:
