@@ -993,7 +993,7 @@ def boardVisibilityToggle(sender, channel, message):
 	if value == 0:
 		return "Your score will be shown normally."
 	else:
-		bits_name = [(i, bits[i] for i in range(len(bits))]
+		bits_name = [(i, bits[i]) for i in range(len(bits))]
 		return "Your score will be hidden from " + '/'.join(bit_data[1] for bit_data in bits_name if value & bit_data[0])
 
 def boardTypeToggle(sender, channel, message):
