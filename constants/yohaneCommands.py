@@ -982,6 +982,32 @@ def useScoreBoard(fro, chan, message):
 	userUtils.setScoreBoard(userID, rx)
 	return "You're using Scoreboard in {rx}.".format(rx='relax' if rx else 'vanilla')
 
+def boardVisibilityToggle(sender, channel, message):
+	mode = 'normal others you none'
+	value = 0
+	if message[0].lower() in mode:
+		value = mode.index(message[0].lower())
+	userID = userUtils.getID(sender)
+	userUtils.setInvisibleBoard(userID, None, value)
+	bits = ['you', 'others']
+	if value == 0:
+		return "Your score will be shown normally."
+	else:
+		bits_name = [(i, bits[i] for i in range(len(bits))]
+		return "Your score will be hidden from " + '/'.join(bit_data[1] for bit_data in bits_name if value & bit_data[0])
+
+def boardTypeToggle(sender, channel, message):
+	if 'setBoard' not in dir(userUtils):
+		return "zZzZzZzZ"
+	mode = 'score pp'
+	relax = len(message) >= 2 and 'relax' == message[1].lower()
+	value = 0
+	if message[0].lower() in mode:
+		value = mode.index(message[0].lower())
+	userID = userUtils.getID(sender)
+	userUtils.setBoard(userID, relax, value)
+	return f"You're using {mode[value]}board in {'Relax' if relax else 'Normal'} plays."
+
 def whitelistUserPPLimit(fro, chan, message):
 	messages = [m.lower() for m in message]
 	target = message[0]
@@ -1086,6 +1112,12 @@ commands = [
 	}, {
 		"trigger": "help",
 		"response": "Click (here)[https://osu.troke.id/index.php?p=16&id=4] for full command list"
+	}, {
+		"trigger": "boardshow",
+		"callback": boardVisibilityToggle,
+	}, {
+		"trigger": "boardtype",
+		"callback": boardTypeToggle,
 	}, {
 		"trigger": "ppboard",
 		"syntax": "<relax/vanilla>",
