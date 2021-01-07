@@ -997,7 +997,7 @@ def boardVisibilityToggle(sender, channel, message):
 		return "Your score will be hidden from " + '/'.join(bit_data[1] for bit_data in bits_name if value & (1 << bit_data[0]))
 
 def boardTypeToggle(sender, channel, message):
-	if 'setBoard' not in dir(userUtils):
+	if 'setBoardType' not in dir(userUtils):
 		return "zZzZzZzZ"
 	mode = 'score pp'.split()
 	relax = len(message) >= 2 and 'relax' == message[1].lower()

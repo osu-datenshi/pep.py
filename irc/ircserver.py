@@ -551,7 +551,7 @@ class Client:
 			return
 		if len(arguments) == 1:
 			if glob.BOT_NAME:
-				self.replyCode(221, "{} +o".format(arguments[0]))
+				self.replyCode(221, "{} +oi".format(arguments[0]))
 			elif isSelf:
 				self.replyCode(221, "{} +i".format(arguments[0]))
 			else:
