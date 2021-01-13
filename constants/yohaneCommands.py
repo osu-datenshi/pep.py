@@ -1011,6 +1011,54 @@ def boardTypeToggle(sender, channel, message):
 	userUtils.setBoard(userID, relax, value)
 	return f"You're using {mode[value]}board in {'Relax' if relax else 'Normal'} plays."
 
+def subscriptionSystem(sender, channel, message):
+	key = 'pp'.split()
+	if len(message) < 1:
+		return False
+	ms = message[0].lower()
+	if ms not in key:
+		return "Available options: " + ', '.join(key)
+	keyData = {
+		'pp': (userUtils.PPScoreInformation, userUtils.setPPScoreInformation)
+	}
+	mode = 'get set unset'.split()
+	userID = userUtils.getID(sender)
+	subscribeValue = keyData[ms][0](userID, False)
+	if len(message) < 2:
+		mode_i = 0
+	else:
+		mode_i = -1
+		if message[1].lower() in key:
+			mode_i = key.index(message[1].lower())
+	if mode_i == -1:
+		return "!subscribe {} <{}>".format(message[0], '/'.join(mode))
+	elif mode_i == 0:
+		if subscribeValue:
+			return "You are currently subscribing to {}.".format(ms)
+		else:
+			return "You are currently not subscribed to {}.".format(ms)
+	elif mode_1 == 1:
+		if subscribeValue:
+			return "You are already subscribing to {}.".format(ms)
+		else:
+			keyData[ms][1](userID, False, True)
+			return "You are subscribing to {}.".format(ms)
+	elif mode_1 == 2:
+		if subscribeValue:
+			keyData[ms][1](userID, False, False)
+			return "You are not subscribing to {} anymore.".format(ms)
+		else:
+			return "You are already not subscribing to {}.".format(ms)
+	elif mode_1 == 3:
+		if subscribeValue:
+			keyData[ms][1](userID, False, False)
+			return "You are not subscribing to {} anymore.".format(ms)
+		else:
+			keyData[ms][1](userID, False, True)
+			return "You are subscribing to {}.".format(ms)
+	else:
+		pass
+
 def whitelistUserPPLimit(fro, chan, message):
 	messages = [m.lower() for m in message]
 	target = message[0]
@@ -1121,6 +1169,9 @@ commands = [
 	}, {
 		"trigger": "boardtype",
 		"callback": boardTypeToggle,
+	}, {
+		"trigger": "subscribe",
+		"callback": subscriptionSystem,
 	}, {
 		"trigger": "ppboard",
 		"syntax": "<relax/vanilla>",
