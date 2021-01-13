@@ -56,7 +56,7 @@ def mirrorMessage(beatmapID):
 """
 Commands callbacks
 
-Must have fro, chan and messages as arguments
+Must have sender, channel and messages as arguments
 :param fro: username of who triggered the command
 :param chan: channel"(or username, if PM) where the message was sent
 :param message: list containing arguments passed from the message
@@ -65,7 +65,9 @@ Must have fro, chan and messages as arguments
 				. . .
 
 return the message or **False** if there's no response by the bot
-TODO: Change False to None, because False doesn't make any sense
+
+1) it's fucking dumb to call fro, chan ok? use normal shit like sender, channel as alternative.
+   not everyone could understand this. this is what happens when you do shit with roblox word every seconds.
 """
 def instantRestart(fro, chan, message):
 	glob.streams.broadcast("main", serverPackets.notification("We are going to instants restart for 60sec"))
@@ -139,7 +141,7 @@ def moderated(fro, chan, message):
 		glob.channels.channels[chan].moderated = enable
 		return "This channel is {} in moderated mode!".format("now" if enable else "no longer")
 	except exceptions.moderatedPMException:
-		return "You are trying to put a private chat in moderated mode. Are you serious?!? You're fired."
+		return False
 
 def kickAll(fro, chan, message):
 	# Kick everyone but mods/admins
@@ -215,7 +217,7 @@ def silence(fro, chan, message):
 		return "Invalid time unit (s/m/h/d)."
 
 	# Max silence time is 7 days
-	if silenceTime > 604800:
+	if silenceTime > 604800: # DUMB. EVEN BANCHO CAN SHOT YOU MORE THAN THIS.
 		return "Invalid silence time. Max silence time is 7 days."
 
 	# Send silence packet to target if he's connected
