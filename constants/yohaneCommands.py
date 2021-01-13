@@ -13,6 +13,7 @@ from common.datenshi import rankUtils
 from common.ripple import userUtils
 from common.constants import gameModes
 from common.constants import privileges
+from common.constants import personalBestScores
 from constants import exceptions, slotStatuses, matchModModes, matchTeams, matchTeamTypes, matchScoringTypes
 from constants import chatChannels
 from constants import serverPackets
@@ -1001,7 +1002,7 @@ def boardVisibilityToggle(sender, channel, message):
 def boardTypeToggle(sender, channel, message):
 	if 'setBoardType' not in dir(userUtils):
 		return "zZzZzZzZ"
-	mode = 'score pp'.split()
+	mode = personalBestScore.VALID_SCORE_TYPES
 	relax = len(message) >= 2 and 'relax' == message[1].lower()
 	value = 0
 	if message[0].lower() in mode:
