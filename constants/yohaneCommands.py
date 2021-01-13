@@ -1021,7 +1021,7 @@ def subscriptionSystem(sender, channel, message):
 	keyData = {
 		'pp': (userUtils.PPScoreInformation, userUtils.setPPScoreInformation)
 	}
-	mode = 'get set unset'.split()
+	mode = 'get set unset toggle'.split()
 	userID = userUtils.getID(sender)
 	subscribeValue = keyData[ms][0](userID, False)
 	if len(message) < 2:
