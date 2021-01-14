@@ -319,19 +319,17 @@ def unban(fro, chan, message):
 
 def restrict(fro, chan, message):
 	# Get parameters
-	for i in message:
-		i = i.lower()
 	target = message[0]
 	alasan = " ".join(message[1:]).strip()
 
 	# Make sure the user exists
-	targetUserID = userUtils.getIDSafe(target)
+	targetUserID = userUtils.getIDSafe(target.lower())
 	userID = userUtils.getID(fro)
 	if not alasan:
 		return "Provide best good reason"
 	if not targetUserID:
 		return "{}: user not found".format(target)
-	if targetUserID in (1, 2):
+	if targetUserID in (1, 2, 3):
 		return "NO!"
 	if isInPrivilegeGroup(targetUserID, 'Chat Moderators'):
 		return "u wot."
@@ -345,7 +343,7 @@ def restrict(fro, chan, message):
 		targetToken.setRestricted()
 
 	log.rap(userID, "has put {} in restricted mode because {}".format(target, alasan), True)
-        # send to discord
+    # send to discord
 	webhook = DiscordWebhook(url=glob.conf.config["discord"]["autobanned"])
 	embed = DiscordEmbed(title="NEW RESTRICT!", description="**Username** : {}\n**Reason** : {}".format(target, alasan), color=16711680)
 	webhook.add_embed(embed)
@@ -355,12 +353,10 @@ def restrict(fro, chan, message):
 
 def unrestrict(fro, chan, message):
 	# Get parameters
-	for i in message:
-		i = i.lower()
 	target = message[0]
 
 	# Make sure the user exists
-	targetUserID = userUtils.getIDSafe(target)
+	targetUserID = userUtils.getIDSafe(target.lower())
 	userID = userUtils.getID(fro)
 	if not targetUserID:
 		return "{}: user not found".format(target)
@@ -1063,6 +1059,7 @@ def whitelistUserPPLimit(fro, chan, message):
 	messages = [m.lower() for m in message]
 	target = message[0]
 	relax = message[1]
+	type = message[2] if len(message) > 2 else ''
 
 	userID = userUtils.getID(target)
 
@@ -1073,9 +1070,23 @@ def whitelistUserPPLimit(fro, chan, message):
 		rx = True
 	else:
 		rx = False
+	
+	rt = 'single total'.split()
+	if type.isdigit():
+		wp = int(type) # use -1
+	else:
+		if type.lower() == 'all':
+			wp = -1
+		elif 'single' in type.lower():
+			wp = 1
+		elif 'total' in type.lower():
+			wp = 2
+		else:
+			wp = 1
 
-	userUtils.whitelistUserPPLimit(userID, rx)
-	return "{user} has been whitelisted from autorestrictions on {rx}.".format(user=target, rx='relax' if rx else 'vanilla')
+	userUtils.whitelistUserPPLimit(userID, rx, wp)
+	rts = '+'.join(rt[i] for i in range(len(rt)) if wp & (1 << i))
+	return "{user} has been whitelisted from {rts} PP Limit on {rx}.".format(user=target, rx='relax' if rx else 'vanilla', rts=rts)
 
 def bloodcat(fro, chan, message):
 	try:
