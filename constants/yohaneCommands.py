@@ -1033,19 +1033,19 @@ def subscriptionSystem(sender, channel, message):
 			return "You are currently subscribing to {}.".format(ms)
 		else:
 			return "You are currently not subscribed to {}.".format(ms)
-	elif mode_1 == 1:
+	elif mode_i == 1:
 		if subscribeValue:
 			return "You are already subscribing to {}.".format(ms)
 		else:
 			keyData[ms][1](userID, False, True)
 			return "You are subscribing to {}.".format(ms)
-	elif mode_1 == 2:
+	elif mode_i == 2:
 		if subscribeValue:
 			keyData[ms][1](userID, False, False)
 			return "You are not subscribing to {} anymore.".format(ms)
 		else:
 			return "You are already not subscribing to {}.".format(ms)
-	elif mode_1 == 3:
+	elif mode_i == 3:
 		if subscribeValue:
 			keyData[ms][1](userID, False, False)
 			return "You are not subscribing to {} anymore.".format(ms)
