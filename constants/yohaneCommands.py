@@ -1025,7 +1025,7 @@ def subscriptionSystem(sender, channel, message):
 	else:
 		mode_i = -1
 		if message[1].lower() in mode:
-			mode_i = key.index(message[1].lower())
+			mode_i = mode.index(message[1].lower())
 	if mode_i == -1:
 		return "!subscribe {} <{}>".format(message[0], '/'.join(mode))
 	elif mode_i == 0:
