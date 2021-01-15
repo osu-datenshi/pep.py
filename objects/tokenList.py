@@ -24,7 +24,7 @@ class tokenList:
 	def __exit__(self, exc_type, exc_val, exc_tb):
 		self._lock.release()
 
-	def addToken(self, userID, ip = "", irc = False, timeOffset=0, tournament=True):
+	def addToken(self, userID, ip = "", irc = False, timeOffset=0, tournament=False):
 		"""
 		Add a token object to tokens list
 
@@ -35,10 +35,9 @@ class tokenList:
 		:param tournament: if True, flag this client as a tournement client. Default: True.
 		:return: token object
 		"""
-		clients = glob.tokens.getTokenFromUserID(userID)
 		newToken = osuToken.token(userID, ip=ip, irc=irc, timeOffset=timeOffset, tournament=tournament)
 		self.tokens[newToken.token] = newToken
-		if not clients:
+		if not tournament and not irc:
 			glob.redis.incr("ripple:online_users")
 		return newToken
 
@@ -52,9 +51,10 @@ class tokenList:
 		if token in self.tokens:
 			if self.tokens[token].ip != "":
 				userUtils.deleteBanchoSessions(self.tokens[token].userID, self.tokens[token].ip)
+			if not self.tokens[token].tournament and not self.tokens[token].irc:
+				glob.redis.decr("ripple:online_users")
 			t = self.tokens.pop(token)
 			del t
-			glob.redis.decr("ripple:online_users")
 
 	def getUserIDFromToken(self, token):
 		"""
