@@ -209,10 +209,11 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 			return 403
 		
 		# Bancho style.
+		isAPI  = fro == glob.BOT_NAME and to.startswith("\x02YOHANE ") and to.endswith("\x02")
 		isSPub = to.startswith(f"{chatChannels.SPECTATOR_PREFIX}_") or to.startswith(f"{chatChannels.MULTIPLAYER_PREFIX}_") or to in (chatChannels.SPECTATOR_MASK, chatChannels.MULTIPLAYER_MASK)
 		forBot = to.lower() == glob.BOT_NAME.lower()
 		botCommand = (to[0] == '#' and message[0] == '!') or forBot
-		if botCommand:
+		if botCommand and not isAPI:
 			redirectBot = not (token.admin or isSPub or to.lower() == chatChannels.SPECIAL_CHANNEL)
 			if to[0] == '#' or forBot:
 				pass
@@ -317,12 +318,12 @@ def sendMessage(fro = "", to = "", message = "", token = None, toIRC = True):
 			recipientToken.enqueue(packet)
 		
 		# Bot must not react to their own message.
-		if fro == glob.BOT_NAME:
+		if fro == glob.BOT_NAME and not isAPI:
 			return 0
 		
 		# Some bot message
 		if (isChannel or to == glob.BOT_NAME):
-			if botCommand:
+			if botCommand or isAPI:
 				msgOffset = 0 if forBot else 1
 				da10Message = fokabot.fokabotCommands(token.username, to, message[msgOffset:])
 			else:

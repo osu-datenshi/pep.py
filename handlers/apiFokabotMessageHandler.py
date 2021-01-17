@@ -30,7 +30,7 @@ class handler(requestsManager.asyncRequestHandler):
 			chatHelper.sendMessage(
 				glob.BOT_NAME,
 				self.get_argument("to").encode().decode("ASCII", "ignore"),
-				self.get_argument("msg").encode().decode("ASCII", "ignore")
+				"\x02YOHANE {}\x02".format(self.get_argument("msg")).encode().decode("ASCII", "ignore")
 			)
 
 			# Status code and message
