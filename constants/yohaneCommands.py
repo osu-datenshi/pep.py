@@ -280,7 +280,7 @@ def ban(fro, chan, message):
 		return "{}: user not found".format(target)
 	if targetUserID in (1, 2):
 		return "NO!"
-	if isInPrivilegeGroup(targetUserID, 'Chat Moderators'):
+	if userUtils.isInPrivilegeGroup(targetUserID, 'Chat Moderators'):
 		return "u wot."
 	# Set allowed to 0
 	userUtils.ban(targetUserID)
@@ -331,7 +331,7 @@ def restrict(fro, chan, message):
 		return "{}: user not found".format(target)
 	if targetUserID in (1, 2, 3):
 		return "NO!"
-	if isInPrivilegeGroup(targetUserID, 'Chat Moderators'):
+	if userUtils.isInPrivilegeGroup(targetUserID, 'Chat Moderators'):
 		return "u wot."
 
 	# Put this user in restricted mode
