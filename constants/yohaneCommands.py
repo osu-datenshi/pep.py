@@ -77,7 +77,7 @@ def instantRestart(fro, chan, message):
 
 def faq(fro, chan, message):
 	key = message[0].lower()
-	data = glob.db.fetch('select entry from bancho_faq where key = %s', [key])
+	data = glob.db.fetch('select entry from bancho_faq where `key` = %s', [key])
 	if data is None:
 		return False
 	return data['entry']
