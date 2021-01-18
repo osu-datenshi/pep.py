@@ -77,10 +77,20 @@ def instantRestart(fro, chan, message):
 
 def faq(fro, chan, message):
 	key = message[0].lower()
-	data = glob.db.fetch('select entry from bancho_faq where `key` = %s', [key])
-	if data is None:
-		return False
-	return data['entry']
+	if 'list' == key:
+		data = [d['key'] for d in glob.db.fetchAll('select `key` from bancho_faq')]
+		if len(data) > 0:
+			s = "Commands are: " + ', '.join(data)
+			ss = s.split()
+			sn = 15
+			return "\n".join(ss[si:si+sn] for si in range(0, len(ss), sn))
+		else:
+			return "FAQ does not have an entry at this point. Little Demons could help me to fill it up."
+	else:
+		data = glob.db.fetch('select entry from bancho_faq where `key` = %s', [key])
+		if data is None:
+			return "Entry not found!"
+		return data['entry']
 
 def roll(fro, chan, message):
 	maxPoints = 100
