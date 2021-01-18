@@ -83,7 +83,8 @@ def faq(fro, chan, message):
 			s = "Commands are: " + ', '.join(data)
 			ss = s.split()
 			sn = 15
-			return "\n".join(ss[si:si+sn] for si in range(0, len(ss), sn))
+			for si in range(0, len(ss), sn):
+				chat.sendMessage(glob.BOT_NAME, chan, ' '.join(ss[si:si+sn]))
 		else:
 			return "FAQ does not have an entry at this point. Little Demons could help me to fill it up."
 	else:
