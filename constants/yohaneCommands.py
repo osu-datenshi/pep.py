@@ -861,13 +861,13 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 	
 	isSet = False
 	isSetRequest = False
-	if 's' in mapType[0].lower():
-		mapType = 'set'
-		isSet = True
-	elif 'set-of' in mapType[0:6].lower():
+	if 'set-of' in mapType[0:6].lower():
 		mapType = 'set'
 		isSet = True
 		isSetRequest = True
+	elif 's' in mapType[0].lower():
+		mapType = 'set'
+		isSet = True
 	elif 'd' in mapType[0].lower() or 'm' in mapType[0].lower():
 		mapType = 'map'
 	else:
