@@ -889,6 +889,8 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 			return "I can't find the beatmap of it, you are not mistaking with set ID right? Try set-of"
 	if isSetRequest:
 		r(beatmapData['beatmapset_id'])
+		beatmapData = glob.db.fetch("SELECT beatmapset_id, song_name, ranked FROM beatmaps WHERE {} = {} LIMIT 1".format('beatmapset_id' if isSet and not isSetRequest else 'beatmap_id', mapID))
+		mapID = beatmapData['beatmapset_id']
 
 	# Figure out which ranked status we're requesting to
 	rankTypeBase = rankType.lower()[0]
