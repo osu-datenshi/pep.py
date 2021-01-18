@@ -900,6 +900,7 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 		else:
 			rankUtils.editMap(mapID, 'reset', userID)
 		r(beatmapData['beatmapset_id'],refresh=True)
+		rankUtils.announceMap(('s' if isSet else 'b', mapID), 'reset')
 		return "{} status is reset.".format(beatmapData['song_name'])
 	elif rankTypeBase in ('r'):
 		rankType = 'rank'
