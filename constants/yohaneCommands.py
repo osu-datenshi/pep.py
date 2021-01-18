@@ -1058,16 +1058,18 @@ def whitelistUserPPLimit(fro, chan, message):
 	target = message[0]
 	relax = message[1]
 	type = message[2] if len(message) > 2 else ''
-
+	
+	if target == 'help':
+		return "!whitelist <user> <mode> <type> <set_mode>\n- user: username\n- mode: vanilla/relax\n- type: all/single/total\n- set_mode (optional): add/set (default add)"
 	userID = userUtils.getID(target)
 
 	if userID == 0:
 		return "That user does not exist."
 
-	if 'x' in relax:
-		rx = True
+	if relax.lower() in 'rl relax'.split():
+		relaxFlag = True
 	else:
-		rx = False
+		relaxFlag = False
 	
 	rt = 'single total'.split()
 	if type.isdigit():
@@ -1081,10 +1083,22 @@ def whitelistUserPPLimit(fro, chan, message):
 			wp = 2
 		else:
 			wp = 1
-
-	userUtils.whitelistUserPPLimit(userID, rx, wp)
+	modCommand = 'add set'.split()
+	modType = 0
+	if len(message) > 3 and message[3].lower() in modCommand:
+		modType = modCommand.index(message[3].lower())
+	if modType == 0:
+		pwp = userUtils.noPPLimit(userID, relaxFlag)
+		if wp == pwp:
+			return "{user} already whitelisted on given part!".format(user=target)
+		wp = wp | pwp
+	elif modType == 1:
+		# DO NOTHING. BECAUSE REPLACE.
+		pass
+	
+	userUtils.whitelistUserPPLimit(userID, relaxFlag, wp)
 	rts = '+'.join(rt[i] for i in range(len(rt)) if wp & (1 << i))
-	return "{user} has been whitelisted from {rts} PP Limit on {rx}.".format(user=target, rx='relax' if rx else 'vanilla', rts=rts)
+	return "{user} has been whitelisted from {rts} PP Limit on {mode}.".format(user=target, mode='relax' if relaxFlag else 'vanilla', rts=rts)
 
 def bloodcat(fro, chan, message):
 	try:
