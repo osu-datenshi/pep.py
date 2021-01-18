@@ -860,26 +860,46 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 		return "Map ranking is not permitted in regular channels, please do so in PMs with AC (or #admin if administrator)."
 	
 	isSet = False
-	if 's' in mapType.lower():
+	isSetRequest = False
+	if 's' in mapType[0].lower():
 		mapType = 'set'
 		isSet = True
-	elif 'd' in mapType.lower() or 'm' in mapType.lower():
+	elif 'set-of' in mapType[0:6].lower():
+		mapType = 'set'
+		isSet = True
+		isSetRequest = True
+	elif 'd' in mapType[0].lower() or 'm' in mapType[0].lower():
 		mapType = 'map'
 	else:
 		return "Please specify whether your request is a single difficulty, or a full set (map/set). Example: '!map unrank/rank/love set/map 256123 mania'."
 	
-
+	def r(sid,refresh=False):
+		url = "{}/v1/cacheBeatmap?sid={}&refresh={}".format(glob.conf.config["server"]["letsapiurl"].rstrip("/"), sid, int(bool(refresh)))
+		requests.get(url, timeout=10)
 	# Grab beatmapData from db
-	beatmapData = glob.db.fetch("SELECT beatmapset_id, song_name, ranked FROM beatmaps WHERE {} = {} LIMIT 1".format('beatmapset_id' if isSet else 'beatmap_id', mapID))
+	if isSet and not isSetRequest:
+		r(mapID)
+	beatmapData = glob.db.fetch("SELECT beatmapset_id, song_name, ranked FROM beatmaps WHERE {} = {} LIMIT 1".format('beatmapset_id' if isSet and not isSetRequest else 'beatmap_id', mapID))
 	if beatmapData is None:
-		if isSet:
+		if isSetRequest:
+			return "I can't find the beatmap set of it."
+		elif isSet:
 			return "I can't find the beatmap set of it."
 		else:
-			return "I can't find the beatmap of it, you are not mistaking with set ID right?"
+			return "I can't find the beatmap of it, you are not mistaking with set ID right? Try set-of"
+	if isSetRequest:
+		r(beatmapData['beatmapset_id'])
 
 	# Figure out which ranked status we're requesting to
 	rankTypeBase = rankType.lower()[0]
-	if rankTypeBase in ('r'):
+	if rankType.lower() in ('update', 'reset'):
+		if isSet:
+			rankUtils.editSet(mapID, 'reset', userID)
+		else:
+			rankUtils.editMap(mapID, 'reset', userID)
+		r(beatmapData['beatmapset_id'],refresh=True)
+		return "{} - {} ({}) status is reset.".format(beatmapData['artist'], beatmapData['title'], beatmapData['creator_id'])
+	elif rankTypeBase in ('r'):
 		rankType = 'rank'
 		status = 'ranked'
 		rankTypeID = 2
@@ -908,16 +928,8 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 	def banchoCallback(msg):
 		for chan in (chatChannels.ANNOUNCE_CHANNEL, chatChannels.ANNOUNCE_RANK_CHANNEL):
 			chat.sendMessage(glob.BOT_NAME, chan, re.sub(r"\!$",f" by [https://osu.troke.id/u/{userID} {name}]!",msg))
-	def discordCallback(msg, idTuple):
-		webhook = DiscordWebhook(url=glob.conf.config["discord"]["ranked-map"])
-		embed = DiscordEmbed(description='{}\nDownload : https://osu.ppy.sh/s/{}'.format(msg, beatmapData["beatmapset_id"]), color=242424)
-		embed.set_thumbnail(url='https://b.ppy.sh/thumb/{}.jpg'.format(str(beatmapData["beatmapset_id"])))
-		embed.set_author(name='{}'.format(name), url='https://osu.troke.id/u/{}'.format(str(userID)), icon_url='https://a.troke.id/{}'.format(str(userID)))
-		embed.set_footer(text='This map was {} from in-game'.format(status))
-		webhook.add_embed(embed)
-		log.info("[rankedmap] Rank status masuk ke discord bro")
-		webhook.execute()
-	rankUtils.announceMap(('s' if isSet else 'b', mapID), status, banchoCallback, discordCallback)
+	log.info("[rankedmap] Rank status masuk ke discord bro")
+	rankUtils.announceMap(('s' if isSet else 'b', mapID), status, banchoCallback)
 	return 'done!'
 
 def postAnnouncement(fro, chan, message): # Post to #announce ingame
