@@ -150,6 +150,29 @@ def handle(tornadoRequest):
 		# Server restarting check
 		if glob.restarting:
 			raise exceptions.banchoRestartingException()
+		
+		def lildemon_list_over_pp():
+			a = 'VANILLA RELAX'.split()
+			b = 'std taiko ctb mania'.split()
+			c = []
+			for d in range(len(a)):
+				j = userUtils.noPPLimit(userID, d == 1)
+				m = [userUtils.getUserStats,userUtils.getUserStatsRx][d]
+				for e in range(len(b)):
+					f, g, h, i = userUtils.obtainPPLimit(userID, e, relax=(d == 1), modded=False)
+					k = j & 2
+					l = m(userID, e)
+					if l['pp'] >= i and not k:
+						c.append((a[d],b[e],l['pp'],i))
+			return c
+		
+		# Little demon
+		lildemon_overpp = lildemon_list_over_pp()
+		if lildemon_overpp:
+			responseToken.enqueue(serverPackets.notification("Hi fellow little demon! Did you forgot to submit yourself to the guild? I'm afraid you may not be able to advance with it."))
+			responseToken.enqueue(serverPackets.notification("To consider further little demon training, here I jotted down some of your achievements! {}".format(
+				"\n".join("{}:{} {:d}/{:d}".format(*ldop) for ldop in lildemon_overpp)
+			)))
 
 		# Send login notification before maintenance message
 		if glob.banchoConf.config["loginNotification"] != "":
@@ -234,7 +257,7 @@ def handle(tornadoRequest):
 
 		# Output channels info
 		for key, value in glob.channels.channels.items():
-			if value.publicRead and not value.hidden:
+			if responseToken.admin or (value.publicRead and not value.hidden):
 				responseToken.enqueue(serverPackets.channelInfo(key))
 
 		# Send friends list
