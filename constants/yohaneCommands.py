@@ -76,25 +76,11 @@ def instantRestart(fro, chan, message):
 	return False
 
 def faq(fro, chan, message):
-	# TODO: Unhardcode this
-	messages = {
-		"rules": "Please make sure to check (Datenshi rules)[https://osu.troke.id/doc/rules].",
-		"swearing": "Please don't abuse swearing",
-		"spam": "Please don't spam",
-		"offend": "Please don't offend other players",
-		"discord": "(Join Datenshi Discord!)[https://link.troke.id/datenshi]",
-		"ping": "NGIK NGOK NGEK PONG",
-		"bruh": "BRUH",
-		"changelog": "Check the (changelog)[https://osu.troke.id/changelog] !",
-		"english": "Please keep this channel in english.",
-		"topic": "Can you please drop the topic and talk about something else?",
-		"lines": "Please try to keep your sentences on a single line to avoid getting silenced.",
-		"vote": "Dont forget to vote us! (Click Here)[https://link.troke.id/vote]"
-	}
 	key = message[0].lower()
-	if key not in messages:
+	data = glob.db.fetch('select entry from bancho_faq where key = %s', [key])
+	if data is None:
 		return False
-	return messages[key]
+	return data['entry']
 
 def roll(fro, chan, message):
 	maxPoints = 100
