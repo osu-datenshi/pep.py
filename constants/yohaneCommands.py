@@ -849,8 +849,14 @@ def rtx(fro, chan, message):
 	userToken = glob.tokens.getTokenFromUserID(targetUserID, ignoreIRC=True, _all=False)
 	userToken.enqueue(serverPackets.rtx(message))
 	return "whatever you wish"
+
+def editAutoMap(sender, channel, message):
+	pass
 	
 def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
+	def r(sid,refresh=False):
+		url = "{}/v1/cacheBeatmap?sid={}&refresh={}".format(glob.conf.config["server"]["letsapiurl"].rstrip("/"), sid, int(bool(refresh)))
+		requests.post(url, timeout=10)
 	# Put the gathered values into variables to be used later
 	messages = [m.lower() for m in message]  #!map rank set [something]
 	rankType = message[0]
@@ -884,13 +890,10 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 	else:
 		return "Please specify whether your request is a single difficulty, or a full set (map/set). Example: '!map unrank/rank/love set/map 256123 mania'."
 	
-	def r(sid,refresh=False):
-		url = "{}/v1/cacheBeatmap?sid={}&refresh={}".format(glob.conf.config["server"]["letsapiurl"].rstrip("/"), sid, int(bool(refresh)))
-		requests.get(url, timeout=10)
 	# Grab beatmapData from db
 	if isSet and not isSetRequest:
 		r(mapID)
-	beatmapData = glob.db.fetch("SELECT beatmapset_id, song_name, ranked FROM beatmaps WHERE {} = {} LIMIT 1".format('beatmapset_id' if isSet and not isSetRequest else 'beatmap_id', mapID))
+	beatmapData = glob.db.fetch("SELECT beatmapset_id, artist, title, difficulty_name, ranked FROM beatmaps WHERE {} = {} LIMIT 1".format('beatmapset_id' if isSet and not isSetRequest else 'beatmap_id', mapID))
 	if beatmapData is None:
 		if isSetRequest:
 			return "I can't find the beatmap set of it."
@@ -900,19 +903,23 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 			return "I can't find the beatmap of it, you are not mistaking with set ID right? Try set-of"
 	if isSetRequest:
 		r(beatmapData['beatmapset_id'])
-		beatmapData = glob.db.fetch("SELECT beatmapset_id, song_name, ranked FROM beatmaps WHERE {} = {} LIMIT 1".format('beatmapset_id' if isSet and not isSetRequest else 'beatmap_id', mapID))
+		beatmapData = glob.db.fetch("SELECT beatmapset_id, artist, title, difficulty_name, ranked FROM beatmaps WHERE {} = {} LIMIT 1".format('beatmapset_id' if isSet and not isSetRequest else 'beatmap_id', mapID))
 		mapID = beatmapData['beatmapset_id']
 
 	# Figure out which ranked status we're requesting to
 	rankTypeBase = rankType.lower()[0]
 	if rankType.lower() in ('update', 'reset'):
 		if isSet:
+			songTitle = "{} - {}".format(beatmapData['artist'],beatmapData['title'])
 			rankUtils.editSet(mapID, 'reset', userID)
 		else:
+			songTitle = "{} - {} [{}]".format(beatmapData['artist'],beatmapData['title'],beatmapData['difficulty_name'])
 			rankUtils.editMap(mapID, 'reset', userID)
 		r(beatmapData['beatmapset_id'],refresh=True)
 		rankUtils.announceMap(('s' if isSet else 'b', mapID), 'reset')
-		return "{} status is reset.".format(beatmapData['song_name'])
+		return "{} status is reset.".format(songTitle)
+	elif rankType.lower()[0:4] == 'auto':
+		pass
 	elif rankTypeBase in ('r'):
 		rankType = 'rank'
 		status = 'ranked'
