@@ -938,13 +938,14 @@ def editMap(fro, chan, message): # Using Atoka's editMap with Aoba's edit
 	if beatmapData['ranked'] == rankTypeID:
 		return "This map is already {}!".format(status)
 
+	# Announce / Log to admin panel logs when ranked status is changed
 	if isSet:
 		rankUtils.editSet(mapID, status, userID)
+		log.rap(userID, "has {} beatmap ({}): {} - {} ({})".format(status, mapType, beatmapData["artist"], beatmapData['title'], mapID), True)
 	else:
 		rankUtils.editMap(mapID, status, userID)
+		log.rap(userID, "has {} beatmap ({}): {} - {} [{}] ({})".format(status, mapType, beatmapData["artist"], beatmapData['title'], beatmapData['difficulty_name'], mapID), True)
 
-	# Announce / Log to admin panel logs when ranked status is changed
-	log.rap(userID, "has {} beatmap ({}): {} ({})".format(status, mapType, beatmapData["song_name"], mapID), True)
 	
 	def banchoCallback(msg):
 		for chan in (chatChannels.ANNOUNCE_CHANNEL, chatChannels.ANNOUNCE_RANK_CHANNEL):
